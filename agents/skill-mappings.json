@@ -1,0 +1,16 @@
+{
+  "_comment": "Agent ↔ Skill 手动映射表（覆盖自动扫描结果）。key = agent 名；value = skill 名数组。",
+  "_format": "可空 {} — 自动扫描会接管。手动指定时优先于自动扫描。",
+  "_example": {
+    "stock-analyst": ["stock-analyzer", "market-research", "deep-research"]
+  },
+
+  "stock-analyst": ["stock-analyzer", "market-research", "deep-research"],
+  "code-reviewer": ["coding-standards", "verification-loop"],
+  "security-reviewer": ["security-review", "security-scan", "gateguard"],
+  "tdd-guide": ["tdd-workflow", "verification-loop"],
+  "planner": ["plan-canvas", "plan-orchestrate", "ecc-guide"],
+  "architect": ["architecture-decision-records", "agentic-patterns"],
+  "marketing-agent": ["marketing-campaign", "content-engine", "ppt-generator"],
+  "seo-specialist": ["seo", "content-engine"]
+}
