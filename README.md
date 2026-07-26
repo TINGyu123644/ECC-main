@@ -42,6 +42,13 @@
 
 **The harness-native operator system for agentic work. Built from real-world multi-harness engineering workflows.**
 
+> ## ⚠️ **【本地定制】请先看 [`PROJECT-CHANGES.md`](./PROJECT-CHANGES.md)！**
+>
+> - 📌 **本项目已有大量本地定制**：3 个新 skill（`macro-monitor`、`ppt-generator`、`self-improvement`）+ 1 个新 agent（`self-improver`）+ 6 步 SOP v2.0
+> - 📌 **README 作者原版未动**（保持原貌），所有定制独立记录在 PROJECT-CHANGES.md
+> - 🚨 **跨设备 / 跨用户使用**：必须先看 PROJECT-CHANGES.md 了解本地同步机制
+> - 🚨 **Windows 用户额外必读**：见 PROJECT-CHANGES.md 顶部 "📌 必读" 章节
+
 Not just configs. A complete system: skills, instincts, memory optimization, continuous learning, security scanning, and research-first development. Production-ready agents, skills, hooks, rules, MCP configurations, and legacy command shims evolved over 10+ months of intensive daily use building real products.
 
 Works across **Codex**, **Claude Code**, **Cursor**, **OpenCode**, **Gemini**, **Zed**, **GitHub Copilot**, and other AI agent harnesses.

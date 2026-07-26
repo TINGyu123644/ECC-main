@@ -1,7 +1,24 @@
 # ECC Skills Index
 
-> 自动生成 · 最近更新：2026-07-25
-> 数据源：`manifests/install-modules.json` · 共 281 个 skill / 17 个模块
+> 自动生成 · 最近更新：2026-07-26
+> 数据源：`manifests/install-modules.json` · 共 286 个 skill / 17 个模块
+
+## 🆕 本次新增摘要
+
+**8 个 skill 是新加的**（不在 `ECC_BASELINE.json` 里）：
+
+| 资源名 | 所属模块 |
+|---|---|
+| `coupling-decider` | `workflow-quality` |
+| `ecc-plugin-dev-sop` | `workflow-quality` |
+| `file-templates` | `workflow-quality` |
+| `macro-monitor` | `business-content` |
+| `ppt-generator` | `business-content` |
+| `self-improvement` | `workflow-quality` |
+| `stock-analyzer` | `business-content` |
+| `verify-checklist` | `workflow-quality` |
+
+**总览**：286 个 skill / 17 个模块 / **8 个新加**
 
 ## 使用说明
 
@@ -17,7 +34,7 @@
 |---|------|---------|------|
 | 1 | `framework-language` | 68 | 编程语言规范 |
 | 2 | `database` | 7 | 数据库 |
-| 3 | `workflow-quality` | 43 | 工作流质量 |
+| 3 | `workflow-quality` | 48 | 工作流质量 |
 | 4 | `optimization-workflows` | 8 | 性能优化 |
 | 5 | `security` | 20 | 安全 / 合规 |
 | 6 | `research-apis` | 9 | 科研 / 检索 API |
@@ -33,7 +50,7 @@
 | 16 | `supply-chain-domain` | 8 | 供应链 |
 | 17 | `document-processing` | 2 | 文档处理 |
 
-**合计**：281 个 skill / 17 个模块
+**合计**：286 个 skill / 17 个模块
 
 ---
 
@@ -120,7 +137,7 @@
 - prisma-patterns — Prisma 模式 ✅
 - redis-patterns — Redis 模式 ✅
 
-### workflow-quality（43 个）
+### workflow-quality（48 个）
 
 - agent-sort — Agent 分类 ✅
 - agent-introspection-debugging — Agent 内省调试 ✅
@@ -165,6 +182,11 @@
 - rules-distill — 规则提炼 ✅
 - santa-method — Santa 方法 ✅
 - git-workflow — Git 工作流 ✅
+- ecc-plugin-dev-sop — 插件开发 ✅ 🟢 **新加**
+- coupling-decider — 根据 ✅ 🟢 **新加**
+- file-templates — 文件模板和 ✅ 🟢 **新加**
+- verify-checklist — 项自检清单（ ✅ 🟢 **新加**
+- self-improvement ✅ 🟢 **新加**
 
 ### optimization-workflows（8 个）
 
@@ -379,9 +401,13 @@
 
 | 资源名 | 所属模块 | 触发词（来自 description） | 加入日期 |
 |---|---|---|---|
-| `macro-monitor` | `business-content`（业务 / 办公 / 金融） | 每日宏观数据监控和推送。自动浏览免费数据源（Trading Economics、FRED、国家统计局、央行官网、财联社等 | 2026-07-25 |
-| `ppt-generator` | `business-content`（业务 / 办公 / 金融） | 做PPT、生成PPT、制作幻灯片、make ppt、create presentation、帮我做个PPT | 2026-07-25 |
-| `stock-analyzer` | `business-content`（业务 / 办公 / 金融） | 全球股票综合分析工具。支持A股、港股、美股等东方财富覆盖的所有市场。根据用户输入的股票名称或代码，从东方财富网获取股票信 | 2026-07-25 |
+| `coupling-decider` | `workflow-quality`（工作流质量） | "根据 md 知识库的 §3 决策流程和 §4 精准判断表，帮助开发者判定新 Skill/Agent 对的耦合度（强 v | 2026-07-26 |
+| `ecc-plugin-dev-sop` | `workflow-quality`（工作流质量） | "完整 ECC 插件开发 6 步 SOP（v2.0）。开发者新增/改造 Skill/Agent/Hook 时的完整流程规 | 2026-07-26 |
+| `file-templates` | `workflow-quality`（工作流质量） | "Skill/Agent/Hook 文件模板和 frontmatter 规范。引用 sop-updated.md Ste | 2026-07-26 |
+| `macro-monitor` | `business-content`（业务 / 办公 / 金融） | 每日宏观数据监控和推送。自动浏览免费数据源（Trading Economics、FRED、国家统计局、央行官网、财联社等 | 2026-07-26 |
+| `ppt-generator` | `business-content`（业务 / 办公 / 金融） | 做PPT、生成PPT、制作幻灯片、make ppt、create presentation、帮我做个PPT | 2026-07-26 |
+| `self-improvement` | `workflow-quality`（工作流质量） | "Captures learnings, errors, and corrections to enable conti | 2026-07-26 |
+| `stock-analyzer` | `business-content`（业务 / 办公 / 金融） | 全球股票综合分析工具。支持A股、港股、美股等东方财富覆盖的所有市场。根据用户输入的股票名称或代码，从东方财富网获取股票信 | 2026-07-26 |
+| `verify-checklist` | `workflow-quality`（工作流质量） | "Step 5 8 项自检清单（sop-updated.md §Step 5）。新增资源后用此 skill 跑 chec | 2026-07-26 |
 
-> 💡 提示：用 `RECENT="<新skill名>" node scripts/generate-skills-readme.js` 把新 skill 标为 🟢 **新加**（自动写入 state，下次自动保留）。
-> 用 `node scripts/generate-skills-readme.js --clear-recent` 清空所有"新加"标记。
+> 💡 提示：新增 skill = 当前 manifest 里**不在 `ECC_BASELINE.json`** 的。git pull 自动同步，无 state 文件，跨设备一致。

@@ -11,7 +11,7 @@
  *
  * Usage:
  *   node scripts/generate-agents-readme.js
- *   RECENT="my-new-agent" node scripts/generate-agents-readme.js
+ *   # 自动用 baseline 对比，无需任何参数
  */
 
 const fs = require('fs');
@@ -21,94 +21,65 @@ const REPO = path.join(__dirname, '..');
 const AGENTS_DIR = path.join(REPO, 'agents');
 const OUTPUT = path.join(AGENTS_DIR, 'AGENTS.md');
 const LABELS_MAP = path.join(AGENTS_DIR, 'zh-labels.json');
-const STATE_DIR = path.join(__dirname, 'state');
-const STATE_FILE = path.join(STATE_DIR, 'recent-agents.json');
-const STATE_BINDINGS_FILE = path.join(STATE_DIR, 'recent-bindings.json');
+const BASELINE = path.join(REPO, 'ECC_BASELINE.json');
 
-const RECENT = (process.env.RECENT || '').split(/\s+/).filter(Boolean);
-const CLEAR_RECENT = process.argv.includes('--clear-recent');
 const NOW = new Date().toISOString().slice(0, 10);
+const { execSync } = require('child_process');
 
-// --- 持久化 "新加" 状态 ---
-function loadJson(p, fallback) {
+// 用 ECC_BASELINE.json 对比当前 manifest/skill-mappings.json：
+//   - 不在 baseline 的 → 用户新加
+//   - 在 baseline 的 → 原 ECC，不标
+function loadBaselineAgents() {
   try {
-    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf-8'));
-  } catch (e) { /* ignore */ }
-  return fallback;
+    if (!fs.existsSync(BASELINE)) return new Set();
+    const b = JSON.parse(fs.readFileSync(BASELINE, 'utf-8'));
+    return new Set((b.agents || []).filter(s => !s.startsWith('_')));
+  } catch (e) { return new Set(); }
 }
-
-function saveJson(p, data) {
+function loadBaselineBindings() {
   try {
-    if (!fs.existsSync(STATE_DIR)) fs.mkdirSync(STATE_DIR, { recursive: true });
-    fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\n');
-  } catch (e) {
-    console.error('WARN: failed to write', p, e.message);
-  }
+    if (!fs.existsSync(BASELINE)) return {};
+    const b = JSON.parse(fs.readFileSync(BASELINE, 'utf-8'));
+    return (b.bindings && typeof b.bindings === 'object') ? b.bindings : {};
+  } catch (e) { return {}; }
 }
 
-function loadRecentAgents() {
-  const state = loadJson(STATE_FILE, {});
-  if (CLEAR_RECENT) { saveJson(STATE_FILE, {}); return {}; }
-  RECENT.forEach(name => { state[name] = NOW; });
-  // --auto 模式：自动检测新加的 agent（不在 _known 列表里的）
-  if (process.argv.includes('--auto') && fs.existsSync(AGENTS_DIR)) {
-    const known = new Set(state._known || []);
-    const isFirstRun = !state._known;
-    const allAgentFiles = fs.readdirSync(AGENTS_DIR)
-      .filter(f => f.endsWith('.md') && !['README.md', 'AGENTS.md'].includes(f));
-    const current = [];
-    allAgentFiles.forEach(f => {
-      const name = f.replace(/\.md$/, '');
-      current.push(name);
-      if (!isFirstRun && !known.has(name) && !state[name]) state[name] = NOW;
-    });
-    state._known = current;
-  }
-  saveJson(STATE_FILE, state);
-  return state;
-}
-
-function loadRecentBindings() {
-  // RECENT_BINDINGS 用 env: RECENT_BINDINGS="marketing-agent:ppt-generator"
-  const fromEnv = (process.env.RECENT_BINDINGS || '').split(/\s+/).filter(Boolean);
-  const state = loadJson(STATE_BINDINGS_FILE, {});
-  if (CLEAR_RECENT) { saveJson(STATE_BINDINGS_FILE, {}); return {}; }
-  fromEnv.forEach(pair => {
-    const [agent, skill] = pair.split(':');
-    if (agent && skill) {
-      if (!state[agent]) state[agent] = {};
-      state[agent][skill] = NOW;
-    }
+// --- 新加检测（无 state，实时算） ---
+function computeNewAgents() {
+  const baseline = loadBaselineAgents();
+  if (baseline.size === 0) return [];
+  const newAgents = [];
+  if (!fs.existsSync(AGENTS_DIR)) return [];
+  const allAgentFiles = fs.readdirSync(AGENTS_DIR)
+    .filter(f => f.endsWith('.md') && !['README.md', 'AGENTS.md'].includes(f));
+  allAgentFiles.forEach(f => {
+    const name = f.replace(/\.md$/, '');
+    if (!baseline.has(name)) newAgents.push(name);
   });
-  // --auto 模式：自动检测 skill-mappings.json 里新加的 binding（不在 _known 列表里的）
-  if (process.argv.includes('--auto')) {
-    const isFirstRun = !state._known;
-    const knownBindings = new Set();
-    Object.keys(state._known || {}).forEach(agentName => {
-      Object.keys((state._known || {})[agentName] || {}).forEach(skillName => {
-        knownBindings.add(`${agentName}::${skillName}`);
+  return newAgents;
+}
+
+function computeNewBindings() {
+  // 返回 {agentName: {skillName: NOW}} —— 当前 mapping 不在 baseline 的 binding
+  const baselineBindings = loadBaselineBindings();
+  const newBindings = {};
+  const mapFile = path.join(AGENTS_DIR, 'skill-mappings.json');
+  if (!fs.existsSync(mapFile)) return {};
+  try {
+    const curMap = JSON.parse(fs.readFileSync(mapFile, 'utf-8'));
+    Object.keys(curMap).forEach(agentName => {
+      if (agentName.startsWith('_')) return;
+      const baseSkills = new Set(baselineBindings[agentName] || []);
+      const curSkills = curMap[agentName] || [];
+      curSkills.forEach(skillName => {
+        if (!baseSkills.has(skillName)) {
+          if (!newBindings[agentName]) newBindings[agentName] = {};
+          newBindings[agentName][skillName] = NOW;
+        }
       });
     });
-    const currentMap = {};
-    try {
-      const map = JSON.parse(fs.readFileSync(path.join(AGENTS_DIR, 'skill-mappings.json'), 'utf-8'));
-      Object.keys(map).forEach(agentName => {
-        if (agentName.startsWith('_')) return;
-        const skills = map[agentName] || [];
-        currentMap[agentName] = {};
-        skills.forEach(skillName => {
-          currentMap[agentName][skillName] = true;
-          if (!isFirstRun && !knownBindings.has(`${agentName}::${skillName}`)) {
-            if (!state[agentName]) state[agentName] = {};
-            if (!state[agentName][skillName]) state[agentName][skillName] = NOW;
-          }
-        });
-      });
-    } catch (e) { /* ignore */ }
-    state._known = currentMap;
-  }
-  saveJson(STATE_BINDINGS_FILE, state);
-  return state;
+  } catch (e) { /* ignore */ }
+  return newBindings;
 }
 
 function readAgentDescription(name) {
@@ -183,42 +154,89 @@ function findRelatedSkills(agentName) {
   }
 }
 
+function categorizeByDescription(desc) {
+  if (!desc) return null;
+  const d = desc.toLowerCase();
+  // 关键词 → 现有类别。每个 regex 必须把 alternatives 包在 () 里
+  // 让 \b 正确作用于所有备选项（避免 "spec" 误匹配 "specialised" 这类 false positive）
+  const rules = [
+    [/\b(review|audit|critique)\b/, 'review'],
+    [/\b(security|threat|vulnerab|exploit|hardening|attack|malware)\b/, 'security'],
+    [/\b(test|tdd|verify|validate)\b/, 'test'],
+    [/\b(plan|architect|structure)\b/, 'plan'],
+    [/\b(refactor|simplif|harden)\b/, 'refactor'],
+    [/\b(build|compile|resolve)\b/, 'build-fix'],
+    [/\b(document|readme|comment)\b/, 'docs'],
+    [/\b(monitor|observ|track|metric)\b/, 'monitor'],
+    [/\b(network|connect|route|tcp|dns)\b/, 'network'],
+    // data 类用精确短语（避免 "extract learnings" 误触发）
+    [/(data\s+(extract|scrap|fetch|parse|pipeline|warehouse|lake|mining)|etl|sql|database)\b/, 'data'],
+    [/\b(marketing|seo|content|campaign)\b/, 'marketing'],
+    [/\b(stock|trading|finance|analyst)\b/, 'domain-analyst'],
+    [/\b(opensource|fork|sanitiz)\b/, 'opensource'],
+    [/\b(health|medical|clinical|phi)\b/, 'healthcare'],
+    [/\b(loop|harness|continuous)\b/, 'loop'],
+    [/\b(gan|adversarial)\b/, 'gan'],
+    // meta 类：反思、知识管理、学习、模式识别
+    [/\b(meta|retrospect|insights?|learnings?|knowledge|memory|pattern)\b/, 'meta'],
+  ];
+  for (const [re, cat] of rules) {
+    if (re.test(d)) return cat;
+  }
+  return null;
+}
+
 function categorize(name) {
-  if (name.includes('reviewer') || name === 'code-reviewer') return 'review';
-  if (name.includes('build-resolver') || name === 'build-error-resolver') return 'build-fix';
-  if (name.includes('architect') || name === 'planner') return 'plan';
-  if (name.includes('test') || name === 'tdd-guide') return 'test';
-  if (name.includes('security') || name === 'silent-failure-hunter') return 'security';
+  if (name.includes('reviewer') || name === 'security-reviewer' || name === 'silent-failure-hunter') return 'review';
+  if (name.includes('build-resolver') || name === 'harmonyos-app-resolver') return 'build-fix';
+  if (name.includes('architect') || name === 'planner' || name === 'homelab-architect') return 'plan';
+  if (name.includes('test') || name === 'tdd-guide' || name === 'e2e-runner' || name === 'pr-test-analyzer' || name === 'agent-evaluator') return 'test';
+  if (name === 'code-simplifier' || name === 'refactor-cleaner' || name === 'comment-analyzer' || name === 'code-explorer') return 'refactor';
   if (name === 'spec-miner' || name === 'type-design-analyzer') return 'design';
   if (name.startsWith('gan-')) return 'gan';
-  if (name === 'refactor-cleaner' || name === 'code-simplifier' || name === 'comment-analyzer') return 'refactor';
-  if (name === 'doc-updater' || name === 'docs-lookup') return 'docs';
-  if (name === 'marketing-agent' || name === 'seo-specialist') return 'marketing';
-  if (name === 'stock-analyst' || name === 'mle-reviewer') return 'domain-analyst';
   if (name.startsWith('opensource-')) return 'opensource';
-  if (name.includes('network') || name === 'homelab-architect') return 'network';
-  if (name.includes('healthcare')) return 'healthcare';
+  if (name === 'marketing-agent' || name === 'seo-specialist') return 'marketing';
+  if (name === 'doc-updater' || name === 'docs-lookup') return 'docs';
   if (name.startsWith('loop-') || name === 'harness-optimizer' || name === 'loop-operator') return 'loop';
-  return 'other';
+  if (name.includes('network')) return 'network';
+  if (name === 'stock-analyst' || name === 'mle-reviewer') return 'domain-analyst';
+  if (name === 'self-improver' || name === 'chief-of-staff' || name === 'conversation-analyzer') return 'meta';
+
+  // 第 2 层：description 关键词匹配 → 复用已有大类
+  //   比如 data-scraper-agent 名字没匹配，但 description 含 "scrape" → 归入 data 类
+  const descObj = readAgentDescription(name);
+  const byDesc = categorizeByDescription(descObj.desc);
+  if (byDesc) return byDesc;
+
+  // 第 3 层：没命中 → 从 agent 名自动派生类别（去角色后缀）
+  //    永远不返回 'other'
+  const roleSuffixes = [
+    '-improver', '-reviewer', '-analyzer', '-resolver',
+    '-evaluator', '-designer', '-generator', '-auditor',
+    '-tester', '-monitor', '-builder', '-planner',
+    '-er', '-or',
+  ];
+  for (const suf of roleSuffixes) {
+    if (name.endsWith(suf)) return name.slice(0, -suf.length);
+  }
+  return name; // agent 名本身就是类别
 }
 
 const CATEGORIES = {
   'review': '代码评审',
   'build-fix': '构建修复',
   'plan': '规划架构',
-  'test': '测试',
-  'security': '安全',
-  'design': '设计',
-  'gan': 'GAN Harness',
+  'test': '测试与评估',
   'refactor': '重构',
-  'docs': '文档',
-  'marketing': '营销',
+  'gan': 'GAN 评估',
+  'opensource': '开源工具',
+  'loop': '循环与 Harness',
+  'network': '网络诊断',
+  'marketing': '营销与 SEO',
+  'docs': '文档与查询',
+  'meta': '反思与知识管理',
   'domain-analyst': '领域分析',
-  'opensource': '开源',
-  'network': '网络',
-  'healthcare': '医疗',
-  'loop': '循环 / Harness',
-  'other': '其他',
+  'design': '类型设计',
 };
 
 function main() {
@@ -229,10 +247,11 @@ function main() {
   const files = fs.readdirSync(AGENTS_DIR).filter(f => f.endsWith('.md') && f !== 'README.md' && f !== 'AGENTS.md' && f !== 'zh-labels.json' && f !== 'skill-mappings.json');
   const agentNames = files.map(f => f.replace(/\.md$/, ''));
 
-  const recentAgents = loadRecentAgents(); // {agentName: "YYYY-MM-DD"}
-  const recentBindings = loadRecentBindings(); // {agentName: {skillName: "YYYY-MM-DD"}}
-  const recentAgentNames = Object.keys(recentAgents).filter(k => k !== '_known');
-  const recentBindingAgents = Object.keys(recentBindings).filter(k => k !== '_known');
+  const recentAgents = {}; // {agentName: NOW} 仅用于渲染，不存盘
+  computeNewAgents().forEach(n => { recentAgents[n] = NOW; });
+  const recentBindings = computeNewBindings(); // {agentName: {skillName: NOW}}
+  const recentAgentNames = Object.keys(recentAgents);
+  const recentBindingAgents = Object.keys(recentBindings);
 
   const byCat = {};
   agentNames.forEach(n => {
@@ -247,6 +266,42 @@ function main() {
   out.push(`> 自动生成 · 最近更新：${NOW}`);
   out.push(`> 数据源：\`agents/\` · 共 ${agentNames.length} 个 agent / ${Object.keys(byCat).length} 个类别`);
   out.push('');
+  // 🆕 顶部摘要：本次新增（数字自动算，类别自动分类）
+  const newAgentCount = recentAgentNames.length;
+  const newBindingCount = recentBindingAgents.reduce((s, a) => s + Object.keys(recentBindings[a] || {}).length, 0);
+  if (newAgentCount > 0 || newBindingCount > 0) {
+    out.push('## 🆕 本次新增摘要');
+    out.push('');
+    if (newAgentCount > 0) {
+      out.push(`**${newAgentCount} 个 agent 是新加的**（不在 \`ECC_BASELINE.json\` 里）：`);
+      out.push('');
+      out.push('| 资源名 | 类别 |');
+      out.push('|---|---|');
+      recentAgentNames.slice().sort().forEach(name => {
+        const cat = categorize(name);
+        out.push(`| \`${name}\` | ${cat}（${CATEGORIES[cat] || '—'}）|`);
+      });
+      out.push('');
+    }
+    if (newBindingCount > 0) {
+      out.push(`**${newBindingCount} 个 binding 是新加的**：`);
+      out.push('');
+      out.push('| Agent | 绑定的 skill |');
+      out.push('|---|---|');
+      recentBindingAgents.slice().sort().forEach(agentName => {
+        const skills = Object.keys(recentBindings[agentName] || {});
+        skills.slice().sort().forEach(skillName => {
+          out.push(`| \`${agentName}\` | \`${skillName}\` |`);
+        });
+      });
+      out.push('');
+    }
+    out.push(`**总览**：${agentNames.length} 个 agent / ${Object.keys(byCat).length} 个类别 / **${newAgentCount} 个新 agent + ${newBindingCount} 个新 binding**`);
+    out.push('');
+  } else {
+    out.push(`**总览**：${agentNames.length} 个 agent / ${Object.keys(byCat).length} 个类别 / 0 个新加`);
+    out.push('');
+  }
   out.push('## 使用说明');
   out.push('');
   out.push('1. 在 `agents/<name>.md` 下新建 agent');
@@ -352,9 +407,7 @@ function main() {
       out.push('');
     }
 
-    out.push('> 💡 提示：用 `RECENT="<新agent名>" node scripts/generate-agents-readme.js` 把新 agent 标为 🟢 **新加**。');
-    out.push('> 用 `RECENT_BINDINGS="<agent>:<skill>" node scripts/generate-agents-readme.js` 标记新绑定（如 `RECENT_BINDINGS="marketing-agent:ppt-generator"`）。');
-    out.push('> 用 `node scripts/generate-agents-readme.js --clear-recent` 清空所有"新加"标记。');
+    out.push('> 💡 提示：新增 agent / binding = 当前 manifest / skill-mappings.json 里**不在 `ECC_BASELINE.json`** 的。git pull 自动同步，无 state 文件，跨设备一致。');
     out.push('');
   }
 
@@ -363,7 +416,7 @@ function main() {
   console.log(`    ${agentNames.length} agents across ${Object.keys(byCat).length} categories`);
   if (recentAgentNames.length > 0 || recentBindingAgents.length > 0) {
     const userBindingCount = recentBindingAgents.reduce((s, a) => s + Object.keys(recentBindings[a] || {}).length, 0);
-    console.log(`    🟢 ${recentAgentNames.length} 个 agent + ${userBindingCount} 个绑定已保留到 state`);
+    console.log(`    🟢 ${recentAgentNames.length} 个新 agent + ${userBindingCount} 个新 binding（manifest - baseline 实时算）`);
   }
 }
 

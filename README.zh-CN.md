@@ -34,6 +34,12 @@
 不止是配置文件，而是一整套完整系统：技能体系、本能行为、记忆优化、持续学习、安全扫描，以及研究优先的开发模式。
 包含可直接用于生产环境的智能体、技能模块、钩子、规则、MCP 配置，以及兼容传统命令的适配层——所有内容均经过 10 个多月高强度日常使用与真实产品开发迭代打磨而成。
 
+> ## ⚠️ **【本地定制】请先看 [`PROJECT-CHANGES.md`](./PROJECT-CHANGES.md)！**
+>
+> - 📌 **本项目已有大量本地定制**：3 个新 skill（`macro-monitor`、`ppt-generator`、`self-improvement`）+ 1 个新 agent（`self-improver`）+ 6 步 SOP v2.0
+> - 📌 **README 作者原版未动**（保持原貌），所有定制独立记录在 PROJECT-CHANGES.md
+> - 🚨 **跨设备 / 跨用户使用**：必须先看 PROJECT-CHANGES.md 了解本地同步机制
+
 可在 **Claude Code**、**Codex**、**Cursor**、**OpenCode**、**Gemini** 及其他 AI 智能体框架中通用。
 
 ---

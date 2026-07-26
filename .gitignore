@@ -102,6 +102,3 @@ ecc2/target/
 assets/images/security/badrudi-exploit.mp4
 
 .aider*
-
-# Hook state (local-only, per-machine)
-scripts/state/

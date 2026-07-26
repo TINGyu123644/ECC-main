@@ -9,7 +9,7 @@
  *
  * Usage:
  *   node scripts/generate-skills-readme.js
- *   RECENT="my-new-skill another-skill" node scripts/generate-skills-readme.js
+ *   # 自动用 baseline 对比，无需任何参数
  */
 
 const fs = require('fs');
@@ -19,59 +19,37 @@ const REPO = path.join(__dirname, '..');
 const MANIFEST = path.join(REPO, 'manifests', 'install-modules.json');
 const SKILLS_DIR = path.join(REPO, 'skills');
 const OUTPUT = path.join(SKILLS_DIR, 'SKILLS.md');
-const STATE_DIR = path.join(__dirname, 'state');
-const STATE_FILE = path.join(STATE_DIR, 'recent-skills.json');
+const BASELINE = path.join(REPO, 'ECC_BASELINE.json');
 
-const RECENT = (process.env.RECENT || '').split(/\s+/).filter(Boolean);
-const CLEAR_RECENT = process.argv.includes('--clear-recent');
 const NOW = new Date().toISOString().slice(0, 10);
 
-// --- 持久化 "新加" 状态 -------------------------------------------------
-function loadRecentState() {
+// 用 ECC_BASELINE.json 对比：当前 manifest 减去 baseline = 用户新加。
+// 不存任何 state 文件（git pull 天然跨设备同步）。
+function loadBaselineSkills() {
   try {
-    if (fs.existsSync(STATE_FILE)) {
-      return JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
-    }
-  } catch (e) { /* ignore */ }
-  return {};
+    if (!fs.existsSync(BASELINE)) return new Set();
+    const b = JSON.parse(fs.readFileSync(BASELINE, 'utf-8'));
+    return new Set((b.skills || []).filter(s => !s.startsWith('_')));
+  } catch (e) { return new Set(); }
 }
 
-function saveRecentState(state) {
+// --- 新加检测（无 state，实时算） ---
+// 直接读 baseline 对比当前 manifest：差集 = 用户新加。
+// 不存任何 state 文件 —— git pull 天然跨设备同步。
+function computeNewSkills() {
+  const baseline = loadBaselineSkills();
+  if (baseline.size === 0) return []; // 无 baseline 时不标（避免全量标记 bug）
+  const newSkills = [];
   try {
-    if (!fs.existsSync(STATE_DIR)) fs.mkdirSync(STATE_DIR, { recursive: true });
-    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2) + '\n');
-  } catch (e) {
-    console.error('WARN: failed to write state file:', e.message);
-  }
-}
-
-// 合并：本次 RECENT env var 加入 state（带日期），再返回合并后的"name → date" 映射
-function mergeRecent() {
-  const state = loadRecentState();
-  if (CLEAR_RECENT) {
-    saveRecentState({});
-    return {};
-  }
-  RECENT.forEach(name => { state[name] = NOW; });
-  // --auto 模式：自动检测 manifest 里新加的 skill（不在 _known 列表里的）
-  if (process.argv.includes('--auto')) {
-    const known = new Set(state._known || []);
-    const isFirstRun = !state._known; // 首次跑只初始化 _known，不标新加
-    const current = [];
-    try {
-      const manifest = JSON.parse(fs.readFileSync(MANIFEST, 'utf-8'));
-      manifest.modules.filter(m => m.kind === 'skills').forEach(mod => {
-        mod.paths.forEach(p => {
-          const name = p.replace(/^skills\//, '');
-          current.push(name);
-          if (!isFirstRun && !known.has(name) && !state[name]) state[name] = NOW;
-        });
+    const manifest = JSON.parse(fs.readFileSync(MANIFEST, 'utf-8'));
+    manifest.modules.filter(m => m.kind === 'skills').forEach(mod => {
+      mod.paths.forEach(p => {
+        const name = p.replace(/^skills\//, '');
+        if (!baseline.has(name)) newSkills.push(name);
       });
-    } catch (e) { /* ignore */ }
-    state._known = current;
-  }
-  saveRecentState(state);
-  return state;
+    });
+  } catch (e) { /* ignore */ }
+  return newSkills;
 }
 
 function readJson(p) {
@@ -147,8 +125,10 @@ function main() {
   const skillMods = manifest.modules.filter(m => m.kind === 'skills');
   const totalSkills = skillMods.reduce((s, m) => s + m.paths.length, 0);
 
-  const recentMap = mergeRecent(); // {name: "YYYY-MM-DD"} + _known
-  const recentNames = Object.keys(recentMap).filter(k => k !== '_known');
+  const newSkillNames = computeNewSkills(); // 实时算：manifest - baseline
+  const recentMap = {}; // {name: NOW} 用于渲染（不存盘）
+  newSkillNames.forEach(n => { recentMap[n] = NOW; });
+  const recentNames = newSkillNames;
 
   const out = [];
   out.push('# ECC Skills Index');
@@ -156,6 +136,29 @@ function main() {
   out.push(`> 自动生成 · 最近更新：${NOW}`);
   out.push(`> 数据源：\`manifests/install-modules.json\` · 共 ${totalSkills} 个 skill / ${skillMods.length} 个模块`);
   out.push('');
+  // 🆕 顶部摘要：本次新增（数字自动算，类别自动分类）
+  const newCount = recentNames.length;
+  if (newCount > 0) {
+    out.push('## 🆕 本次新增摘要');
+    out.push('');
+    out.push(`**${newCount} 个 skill 是新加的**（不在 \`ECC_BASELINE.json\` 里）：`);
+    out.push('');
+    out.push('| 资源名 | 所属模块 |');
+    out.push('|---|---|');
+    recentNames.slice().sort().forEach(name => {
+      let modId = '';
+      for (const mod of skillMods) {
+        if (mod.paths.includes(`skills/${name}`)) { modId = mod.id; break; }
+      }
+      out.push(`| \`${name}\` | \`${modId}\` |`);
+    });
+    out.push('');
+    out.push(`**总览**：${totalSkills} 个 skill / ${skillMods.length} 个模块 / **${newCount} 个新加**`);
+    out.push('');
+  } else {
+    out.push(`**总览**：${totalSkills} 个 skill / ${skillMods.length} 个模块 / 0 个新加`);
+    out.push('');
+  }
   out.push('## 使用说明');
   out.push('');
   out.push('1. 在 `skills/<name>/` 下新建 SKILL.md');
@@ -233,15 +236,14 @@ function main() {
       out.push(`| \`${name}\` | \`${modId}\`${modTheme ? `（${modTheme}）` : ''} | ${triggers} | ${addedDate} |`);
     });
     out.push('');
-    out.push('> 💡 提示：用 `RECENT="<新skill名>" node scripts/generate-skills-readme.js` 把新 skill 标为 🟢 **新加**（自动写入 state，下次自动保留）。');
-    out.push('> 用 `node scripts/generate-skills-readme.js --clear-recent` 清空所有"新加"标记。');
+    out.push('> 💡 提示：新增 skill = 当前 manifest 里**不在 `ECC_BASELINE.json`** 的。git pull 自动同步，无 state 文件，跨设备一致。');
     out.push('');
   }
 
   fs.writeFileSync(OUTPUT, out.join('\n'));
   console.log(`OK: ${OUTPUT}`);
   console.log(`    ${totalSkills} skills across ${skillMods.length} modules`);
-  if (recentNames.length > 0) console.log(`    🟢 ${recentNames.length} 个"新加"标记已保留到 ${STATE_FILE}`);
+  if (recentNames.length > 0) console.log(`    🟢 ${recentNames.length} 个新加 skill（manifest - baseline 实时算，无需 state 文件）`);
 }
 
 main();

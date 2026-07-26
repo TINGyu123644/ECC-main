@@ -12,5 +12,7 @@
   "planner": ["plan-canvas", "plan-orchestrate", "ecc-guide"],
   "architect": ["architecture-decision-records", "agentic-patterns"],
   "marketing-agent": ["marketing-campaign", "content-engine", "ppt-generator"],
-  "seo-specialist": ["seo", "content-engine"]
+  "ecc-plugin-dev-agent": ["ecc-plugin-dev-sop", "coupling-decider", "file-templates", "verify-checklist"],
+  "seo-specialist": ["seo", "content-engine"],
+  "self-improver": ["self-improvement"]
 }

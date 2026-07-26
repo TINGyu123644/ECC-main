@@ -318,7 +318,12 @@
         "skills/repo-scan",
         "skills/rules-distill",
         "skills/santa-method",
-        "skills/git-workflow"
+        "skills/git-workflow",
+        "skills/ecc-plugin-dev-sop",
+        "skills/coupling-decider",
+        "skills/file-templates",
+        "skills/verify-checklist",
+        "skills/self-improvement"
       ],
       "targets": [
         "claude",
