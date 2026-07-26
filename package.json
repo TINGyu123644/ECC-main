@@ -460,7 +460,7 @@
     "eslint": "10.6.0",
     "globals": "17.4.0",
     "markdownlint-cli": "0.48.0",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=18"
