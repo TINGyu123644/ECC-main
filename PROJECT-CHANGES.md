@@ -581,39 +581,54 @@ Step 5  8 项自检     → 完整核验清单
 | dependency | ❌ 无（v2.0.0 起自包含） |
 | 命名空间 | `ecc-cn-*`（不与 `ecc:*` 撞名） |
 
-### 14.2 安装
+### 14.2 安装（全 shell 通用）
 
-**方式 A：从 GitHub 直装（推荐）**
+#### 方式 A：从 GitHub 直装（最简单）
+
+所有 shell 都用同一条命令：
 
 ```bash
 claude plugin install https://github.com/TINGyu123644/ECC
 ```
 
-Claude Code 会自动：
-1. 拉取 wrapper 仓库
-2. 读 `.claude-plugin/plugin.json` 注册 `skills/` `agents/` `commands/` 三个目录
-3. 把全部 295 skills / 73 agents / 96 commands 注册到当前会话
-4. 不再触发任何依赖安装
-
-**方式 B：本地 clone 后用 marketplace 形式**
-
-```bash
-# macOS / Linux / Git Bash on Windows
-git clone https://github.com/TINGyu123644/ECC.git ~/ecc-cn
-cd ~/ecc-cn
-claude plugin install .    # 或 marketplace.json 路径
+```powershell
+claude plugin install https://github.com/TINGyu123644/ECC
 ```
 
-> ⚠️ **Windows PowerShell 用户**：`~` 在 PowerShell 里**不会展开**，会被 git 当作字面字符，创建出 `~\ecc-cn\` 这种字面带波浪号的目录。改用 `$HOME`：
+```cmd
+claude plugin install https://github.com/TINGyu123644/ECC
+```
+
+Claude Code 会自动拉仓库 + 注册 `skills/` `agents/` `commands/` + 不触发依赖安装。
+
+#### 方式 B：本地 clone 后装（跨 shell 表）
+
+| Shell | clone 路径写法 | cd 写法 | install 命令 |
+|---|---|---|---|
+| **bash / zsh**（macOS / Linux） | `~/ecc-cn` | `cd ~/ecc-cn` | `claude plugin install .` |
+| **Git Bash**（Windows） | `~/ecc-cn` | `cd ~/ecc-cn` | `claude plugin install .` |
+| **PowerShell**（Windows） | `"$HOME/ecc-cn"` | `cd "$HOME/ecc-cn"` | `claude plugin install .` |
+| **PowerShell**（Windows，绝对路径） | `C:\Users\26631\ecc-cn` | `cd C:\Users\26631\ecc-cn` | `claude plugin install .` |
+| **cmd**（Windows） | `%USERPROFILE%\ecc-cn` | `cd /d %USERPROFILE%\ecc-cn` | `claude plugin install .` |
+| **WSL**（从 Windows 访问 Linux 文件） | `~/ecc-cn`（Linux 视角） | `cd ~/ecc-cn` | `claude plugin install .` |
+
+**bash / zsh / Git Bash（macOS / Linux / Windows Git Bash）**
+
+```bash
+git clone https://github.com/TINGyu123644/ECC.git ~/ecc-cn
+cd ~/ecc-cn
+claude plugin install .
+```
+
+**Windows PowerShell**
 
 ```powershell
-# Windows PowerShell
 git clone https://github.com/TINGyu123644/ECC.git "$HOME/ecc-cn"
 cd "$HOME/ecc-cn"
 claude plugin install .
 ```
 
-或直接用绝对路径：
+或绝对路径（避免 home 目录膨胀）：
 
 ```powershell
 git clone https://github.com/TINGyu123644/ECC.git C:\Users\26631\ecc-cn
@@ -621,15 +636,27 @@ cd C:\Users\26631\ecc-cn
 claude plugin install .
 ```
 
-如果之前已经误 clone 到字面 `~` 目录，先清理：
+**Windows cmd**
 
-```powershell
-Remove-Item -Recurse -Force "~\ecc-cn"
+```cmd
+git clone https://github.com/TINGyu123644/ECC.git %USERPROFILE%\ecc-cn
+cd /d %USERPROFILE%\ecc-cn
+claude plugin install .
 ```
 
-**方式 C：作为 submodule 嵌入已有项目**
+> ⚠️ **PowerShell 常见坑**：`~` 在 PowerShell 里**不会展开**（PS 5.x 历史 bug）。`git clone ~/ecc-cn` 会被 git 当字面字符处理，创建出 `~\ecc-cn\` 这种字面带波浪号的目录。如果已经误 clone，先清理：
+>
+> ```powershell
+> Remove-Item -Recurse -Force "~\ecc-cn"
+> ```
+
+#### 方式 C：作为 submodule 嵌入已有项目
 
 ```bash
+git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn
+```
+
+```powershell
 git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn
 ```
 
