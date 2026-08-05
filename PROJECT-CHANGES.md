@@ -9,16 +9,16 @@
 - **本项目做了什么**：在原版 ECC 上加了 **8 个 skill + 3 个 agent + 1 套 SOP v2.0 + 1 份耦合决策知识库 + 1 套自动同步机制**
 - **8 个新 skill**：`ppt-generator`、`macro-monitor`、`stock-analyzer`、`self-improvement`、`ecc-plugin-dev-sop`、`coupling-decider`、`file-templates`、`verify-checklist`
 - **3 个新 agent**：`self-improver`、`stock-analyst`、`ecc-plugin-dev-agent`
-- **3 份姊妹文档**（根目录；2026-07-30 v2.0 重排后；2026-08-05 增第 3 份）：
+- **8 份根级文档**（wrapper 根目录；2026-07-30 v2.0 重排后；2026-08-05 扩到 8 份）：
   - [`ECC-技能选择机制-渐进式加载.md`](./ECC-技能选择机制-渐进式加载.md) — 渐进式加载机制（v1.2，5 种方法：2 代码层 + 3 约定层）
   - [`ECC-技能编排机制.md`](./ECC-技能编排机制.md) — 编排机制（v2.0，「4 类文件 + 1 条数据流」；§ 8「讲给小朋友听:写作文 5 步」为通俗版）
   - [`ECC-错误定位与修复机制.md`](./ECC-错误定位与修复机制.md) — 错误定位与修复机制（v1.0，5 类资源 + 1 触发原则；诚实声明：必须先有错误信号）
-- **1 套 plugin 包装**（2026-08-05 新增）：wrapper 仓库本身是 Claude Code plugin `ecc-cn` v1.0.0，自动依赖 `ecc@^2.0.0`，详见 § 14 插件使用说明
-- **1 份耦合判定知识库**（根目录）：
-  - [`Agent-Skill-耦合方式决策知识库.md`](./Agent-Skill-耦合方式决策知识库.md) — 强/弱耦合判定标准
-- **速查表**：
-  - [`SKILLS.md`](./skills/SKILLS.md) 顶部 — 17 个模块的 skill 速查表
-  - [`AGENTS.md`](./agents/AGENTS.md) 顶部 — 14 个 agent 类别的速查表
+  - [`Agent-Skill-耦合方式决策知识库.md`](./Agent-Skill-耦合方式决策知识库.md) — Agent-Skill 强/弱耦合判定标准
+  - [`sop-updated.md`](./sop-updated.md) — ECC 插件开发 6 步标准操作清单（v2.0）
+  - [`SKILLS.md`](./SKILLS.md) — 291 skill × 17 模块速查（自动生成）
+  - [`AGENTS.md`](./AGENTS.md) — 73 agent 速查（自动生成）
+  - [`COMMANDS.md`](./COMMANDS.md) — 96 command 速查（自动生成）
+- **1 套 plugin 包装**（2026-08-05 新增，v2.1.0 自包含）：wrapper 仓库本身是 Claude Code 插件 `ecc-cn` v2.1.0，包含 295 skills / 73 agents / 96 commands + 8 份根文档，**无依赖**（v2.0.0 起去掉 ecc 依赖），详见 § 14 插件使用说明（含 PowerShell `$HOME` 安装示例）
 - **自动同步机制**：3 层 hook（PostToolUse + post-commit + post-merge），`manifest - baseline` 实时算
 - **本 README 内容保持原作者原貌**（[README.md](./README.md) 顶部加 callout 指向本文档）
 
