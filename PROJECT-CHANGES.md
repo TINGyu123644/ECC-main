@@ -598,9 +598,33 @@ Claude Code 会自动：
 **方式 B：本地 clone 后用 marketplace 形式**
 
 ```bash
+# macOS / Linux / Git Bash on Windows
 git clone https://github.com/TINGyu123644/ECC.git ~/ecc-cn
 cd ~/ecc-cn
 claude plugin install .    # 或 marketplace.json 路径
+```
+
+> ⚠️ **Windows PowerShell 用户**：`~` 在 PowerShell 里**不会展开**，会被 git 当作字面字符，创建出 `~\ecc-cn\` 这种字面带波浪号的目录。改用 `$HOME`：
+
+```powershell
+# Windows PowerShell
+git clone https://github.com/TINGyu123644/ECC.git "$HOME/ecc-cn"
+cd "$HOME/ecc-cn"
+claude plugin install .
+```
+
+或直接用绝对路径：
+
+```powershell
+git clone https://github.com/TINGyu123644/ECC.git C:\Users\26631\ecc-cn
+cd C:\Users\26631\ecc-cn
+claude plugin install .
+```
+
+如果之前已经误 clone 到字面 `~` 目录，先清理：
+
+```powershell
+Remove-Item -Recurse -Force "~\ecc-cn"
 ```
 
 **方式 C：作为 submodule 嵌入已有项目**
