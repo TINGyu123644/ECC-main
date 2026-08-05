@@ -651,15 +651,27 @@ Claude Code 在启动时会扫描 `~/.claude/plugins/` 目录，把每个子目�
 - ✅ 跨平台一致（Linux / macOS / Windows 都按"复制到 plugins 目录"操作）
 - ✅ 不污染 HOME 目录（不会创建字面 `~/ecc-cn/` 这种垃圾目录）
 
-#### 方式 B：CLI 直装（可选，需要 `claude` CLI 可用）
+#### 方式 B：CLI marketplace 两步装（可选，需要 `claude` CLI 可用）
 
-如果本机 `claude` CLI 正常：
+如果本机 `claude` CLI 正常（`claude --version` 能输出版本号），用两步：
 
 ```bash
-claude plugin install https://github.com/TINGyu123644/ECC
+# 第 1 步：把仓库 URL 注册成 marketplace（命名随意，下面用 ecc-cn-marketplace）
+claude marketplace add https://github.com/TINGyu123644/ECC ecc-cn-marketplace
+
+# 第 2 步：从该 marketplace 装插件（用 plugin.json 里的 name 字段 = "ecc-cn"）
+claude plugin install ecc-cn
 ```
 
-一行搞定。Claude Code 会自动拉仓库 + 注册。但如果 `claude` CLI 坏了（最常见：`claude.exe` 被 npm update 替换失败只剩 `.old.*` 备份），这条会失败，请改用方式 A。
+**常见误区**：`claude plugin install https://github.com/...` ❌ —— 这条命令不接受 URL 当 plugin 名，会把整个 URL 字符串当 plugin 名去 marketplace 里找，报错：
+
+```
+Plugin "https://github.com/..." not found in any configured marketplace
+```
+
+正确做法是先 `marketplace add` 注册，再 `plugin install` 用 plugin 名。
+
+如果 `claude` CLI 坏了（最常见：`claude.exe` 被 npm update 替换失败只剩 `.old.*` 备份），这两条也会失败，请改用方式 A 手动复制。
 
 #### 方式 C：作为 submodule 嵌入已有项目（高级）
 
