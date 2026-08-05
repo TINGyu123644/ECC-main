@@ -9,9 +9,10 @@
 - **本项目做了什么**：在原版 ECC 上加了 **8 个 skill + 3 个 agent + 1 套 SOP v2.0 + 1 份耦合决策知识库 + 1 套自动同步机制**
 - **8 个新 skill**：`ppt-generator`、`macro-monitor`、`stock-analyzer`、`self-improvement`、`ecc-plugin-dev-sop`、`coupling-decider`、`file-templates`、`verify-checklist`
 - **3 个新 agent**：`self-improver`、`stock-analyst`、`ecc-plugin-dev-agent`
-- **2 份姊妹文档**（根目录；2026-07-30 v2.0 重排后）：
+- **3 份姊妹文档**（根目录；2026-07-30 v2.0 重排后；2026-08-05 增第 3 份）：
   - [`ECC-技能选择机制-渐进式加载.md`](./ECC-技能选择机制-渐进式加载.md) — 渐进式加载机制（v1.2，5 种方法：2 代码层 + 3 约定层）
   - [`ECC-技能编排机制.md`](./ECC-技能编排机制.md) — 编排机制（v2.0，「4 类文件 + 1 条数据流」；§ 8「讲给小朋友听:写作文 5 步」为通俗版）
+  - [`ECC-错误定位与修复机制.md`](./ECC-错误定位与修复机制.md) — 错误定位与修复机制（v1.0，5 类资源 + 1 触发原则；诚实声明：必须先有错误信号）
 - **1 份耦合判定知识库**（根目录）：
   - [`Agent-Skill-耦合方式决策知识库.md`](./Agent-Skill-耦合方式决策知识库.md) — 强/弱耦合判定标准
 - **速查表**：
@@ -90,7 +91,13 @@
 **内容**：v2.0 编排机制 —「4 类文件 + 1 条数据流」：1 共享引擎（`skills/orch-pipeline/SKILL.md`，122 行）+ 5 剧本（`skills/orch-{add-feature, change-feature, fix-defect, refine-code, build-mvp}/SKILL.md`，~45 行/个）+ 6 入口（`commands/orch-*.md`，~30 行/个）+ ⭐ 1 真硬代码（`workflows/orch-review.workflow.js`，296 行，唯一 fail-closed）。含 4 tier size classifier（trivial/small/standard/large）与诚实声明（仅 Phase 5 fail-closed，其余靠 AI 自觉）。通俗版见 § 8「讲给小朋友听:写作文 5 步（4 个办法）」。
 **何时看**：加新 agent、设计多 skill 协同流程、或评审编排 pipeline 时。
 
-### 2.7 SKILLS.md / AGENTS.md 速查表
+### 2.7 文档：`ECC-错误定位与修复机制.md`（v1.0，2026-08-05 新增）
+
+**位置**：`./ECC-错误定位与修复机制.md`
+**内容**：错误定位 + 修复机制 —「5 类资源 + 1 触发原则」：R1 硬代码 agent（11 个 build-resolver：通用 JS/TS / cpp / dart / go / java / kotlin / pytorch / react / rust / swift / django）+ R2 语义层 agent（silent-failure-hunter / debugger / code-reviewer / security-reviewer / pr-test-analyzer）+ R3 hook 防线（PreToolUse / PostToolUse + `ECC_HOOK_PROFILE`）+ R4 剧本组合（`orch-fix-defect`）+ R5 修复原则（不凭空猜 / minimal diff / 架构改动交 architect / 修完要验证）。含诚实声明：**没有「凭空猜 bug」**，必须先有具体错误信号（stderr / failed test / stack trace），agent 才能动。§ 9 与编排 v2.0 / 选择 v1.2 形成三姊妹对比表。
+**何时看**：报错时（先看 § 1.7 流程）、改 bug 前（先看 § 6 反模式）、评审 ECC 错误处理能力时。
+
+### 2.8 SKILLS.md / AGENTS.md 速查表
 
 `SKILLS.md` 和 `AGENTS.md` 顶部都加了 🆕 本次新增摘要：
 
@@ -316,6 +323,7 @@ ECC_BASELINE.json                                ← 原版基线（278 skill / 
 PROJECT-CHANGES.md                              ← 本文档
 ECC-技能选择机制-渐进式加载.md                  ← 渐进式加载机制（v1.2，5 种方法）
 ECC-技能编排机制.md                             ← 编排机制（v2.0，「4 类文件 + 1 条数据流」；§ 8 为通俗版）
+ECC-错误定位与修复机制.md                       ← 错误定位修复机制（v1.0，5 类资源 + 1 触发原则；2026-08-05 新增）
 
 agents/self-improver.md                          ← 反射 agent
 skills/self-improvement/SKILL.md                 ← 学习日志 skill
