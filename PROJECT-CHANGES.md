@@ -662,10 +662,21 @@ Claude Code 在启动时会扫描 `~/.claude/plugins/` 目录，把每个子目�
 claude plugin marketplace add https://github.com/TINGyu123644/ECC
 
 # 第 2 步：用 plugin@marketplace 限定语法从该 marketplace 装
-claude plugin install ecc-cn@<marketplace-name>
+# 注意：marketplace 名是 add 命令自动派生的（实测对 wrapper 仓库派生为 'ecc-cn'），
+# 不是 URL 也不是任意字符串。装完先看实际名字：
+claude plugin marketplace list    # 找刚 add 的 marketplace 名
+
+# 然后用 plugin@marketplace 限定语法装（marketplace 名 = 'ecc-cn'）
+claude plugin install ecc-cn@ecc-cn
 ```
 
-`<marketplace-name>` 是 `marketplace add` 自动从 URL 派生的标识符。装完跑一次 `claude plugin list` 即可看到 `ecc-cn`。
+**易踩的坑**：把 `<marketplace-name>` 当占位符保留 → 命令把字面字符串当 marketplace 名查找，报错：
+
+```
+Plugin "ecc-cn" not found in marketplace "<marketplace-name>".
+```
+
+正确做法是先用 `marketplace list` 看实际派生的 marketplace 名（实测本 wrapper 仓库派生为 `ecc-cn`），再代入。
 
 **常见误区 1**：`claude plugin install https://github.com/...` ❌ —— 这条命令不接受 URL 当 plugin 名，会把整个 URL 字符串当 plugin 名去 marketplace 里找，报错：
 
