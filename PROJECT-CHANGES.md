@@ -546,23 +546,39 @@ Step 5  8 项自检     → 完整核验清单
 
 ---
 
-## 14. 如何使用 ecc-cn 插件（2026-08-05 新增）
+## 14. 如何使用 ecc-cn 插件（2026-08-05 新增，v2.1.0 重写）
 
-> wrapper 仓库 `TINGyu123644/ECC` 本身即 Claude Code 插件 `ecc-cn` v1.0.0。本节是**用户视角**的完整使用说明。
+> wrapper 仓库 `TINGyu123644/ECC` 本身即 Claude Code 插件 `ecc-cn` v2.1.0。本节是**用户视角**的完整使用说明。
 
-### 14.1 它是什么
+### 14.0 版本演进
 
-`ecc-cn` 是一个**薄包装插件**，把 wrapper 根目录的 4 份机制知识文档（编排 / 选择 / 错误定位修复 / 耦合判定）暴露为可调用的 skill 和 slash command。它**不替代也不修改**原版 ECC 插件；通过 `dependencies` 字段自动安装 `ecc@^2.0.0`，装 `ecc-cn` 就同时拿到两套。
+| 版本 | 日期 | 形态 | skills | agents | commands |
+|---|---|---|---|---|---|
+| v1.0.0 | 2026-08-05 | 薄包装（依赖 ecc） | 2 | 0 | 1 |
+| **v2.0.0** | 2026-08-05 | 自包含（291+73+96 全部打包） | 291 | 73 | 96 |
+| **v2.1.0** | 2026-08-05 | 自包含 + SOP + 3 速查表 + 4 catalog skill | 295 | 73 | 96 |
+
+### 14.1 它是什么（v2.1.0）
+
+`ecc-cn` 是**自包含 Claude Code 插件**，把原版 ECC 的 **291 skills / 73 agents / 96 commands 全部打包**进来（已与子模块 `ECC-main/` 内容一致），再叠加：
+
+- **4 份机制知识文档**（编排 / 选择 / 错误定位修复 / 耦合判定）
+- **1 份 SOP**（sop-updated.md，6 步插件开发）
+- **3 份速查表**（SKILLS.md / AGENTS.md / COMMANDS.md 自动生成）
+- **6 个 ecc-cn-* skill**（mechanisms / coupling-decision / sop / skill-catalog / agent-catalog / command-catalog）
+- **1 个 `/ecc-cn-explain` 命令**（支持 8 个 topic 路由）
+
+**单装一条命令即获得完整 ECC + 中文知识层 + 全部速查表**，无需任何依赖。
 
 **插件元信息**：
 
 | 项 | 值 |
 |---|---|
 | plugin name | `ecc-cn` |
-| version | `1.0.0` |
+| version | `2.1.0` |
 | author | TINGyu123644 |
 | repository | `https://github.com/TINGyu123644/ECC` |
-| dependency | `ecc: ^2.0.0`（自动安装） |
+| dependency | ❌ 无（v2.0.0 起自包含） |
 | 命名空间 | `ecc-cn-*`（不与 `ecc:*` 撞名） |
 
 ### 14.2 安装
@@ -575,9 +591,9 @@ claude plugin install https://github.com/TINGyu123644/ECC
 
 Claude Code 会自动：
 1. 拉取 wrapper 仓库
-2. 读 `.claude-plugin/plugin.json` 看到 `dependencies: { ecc: "^2.0.0" }`
-3. 自动装原版 ECC 插件
-4. 把 wrapper 的 skills/commands 注册到当前会话
+2. 读 `.claude-plugin/plugin.json` 注册 `skills/` `agents/` `commands/` 三个目录
+3. 把全部 295 skills / 73 agents / 96 commands 注册到当前会话
+4. 不再触发任何依赖安装
 
 **方式 B：本地 clone 后用 marketplace 形式**
 
@@ -593,73 +609,105 @@ claude plugin install .    # 或 marketplace.json 路径
 git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn
 ```
 
+> ⚠️ 注意：v2.1.0 wrapper 不再依赖 `ECC-main/` 子模块（子模块仅作 source reference）。但仓库仍保留子模块路径，删它不影响 plugin 运行。
+
 ### 14.3 装好后能用什么
 
-**3 个新资源**（与原 ECC 资源共存，不重名）：
+**8 份根级文档**（直接打开 / 被 skill 路由）：
 
-| 资源 | 类型 | 触发方式 | 作用 |
-|---|---|---|---|
-| `ecc-cn-mechanisms` | skill | 用户问 ECC 机制相关问题时 AI 自动路由 | 路由到 4 份文档之一 |
-| `ecc-cn-coupling-decision` | skill | 用户问 Agent-Skill 耦合时 AI 自动路由 | Agent-Skill 强/弱耦合判定标准 |
-| `/ecc-cn-explain <topic>` | slash command | 用户主动输入 | 直接打开对应文档 |
+| # | 文档 | 内容 |
+|---|---|---|
+| 1 | `ECC-技能编排机制.md` | v2.0 编排机制（4 类文件 + 1 数据流） |
+| 2 | `ECC-技能选择机制-渐进式加载.md` | v1.2 渐进式加载（5 种方法） |
+| 3 | `ECC-错误定位与修复机制.md` | v1.0 错误定位修复（5 类资源 + 1 触发原则） |
+| 4 | `Agent-Skill-耦合方式决策知识库.md` | Agent-Skill 强/弱耦合判定 |
+| 5 | `sop-updated.md` | **v2.0 插件开发 6 步 SOP**（Step 0-5） |
+| 6 | `SKILLS.md` | **291 skill × 17 模块速查**（自动生成） |
+| 7 | `AGENTS.md` | **73 agent 速查**（自动生成） |
+| 8 | `COMMANDS.md` | **96 command 速查**（自动生成） |
+
+**6 个 ecc-cn-* skill**（命名空间独占）：
+
+| skill | 路由到 |
+|---|---|
+| `ecc-cn-mechanisms` | 4 份机制文档（按用户意图） |
+| `ecc-cn-coupling-decision` | 耦合判定知识库 |
+| `ecc-cn-sop` | sop-updated.md（6 步插件开发 SOP） |
+| `ecc-cn-skill-catalog` | SKILLS.md（291 skill） |
+| `ecc-cn-agent-catalog` | AGENTS.md（73 agent） |
+| `ecc-cn-command-catalog` | COMMANDS.md（96 command） |
+
+**1 个 slash command**：
+
+```
+/ecc-cn-explain <topic>
+```
+
+**8 个 topic**（中英文都能识别）：
+
+| topic | 命中关键字 | 打开 |
+|---|---|---|
+| `orchestration` | `orchestrat*` / `编排` / `pipeline` / `6 阶段` / `phase mask` | 编排机制 |
+| `selection` | `select*` / `选择` / `progressive` / `渐进式` / `fuzzy` / `Top-N` / `三级下钻` | 选择机制 |
+| `error-fix` | `error` / `fix` / `bug` / `错误` / `修复` / `build-resolver` / `minimal diff` | 错误定位修复 |
+| `coupling` | `coupling` / `耦合` / `强耦合` / `弱耦合` / `binding` | 耦合判定 |
+| `sop` | `sop` / `6 步` / `plugin dev` / `插件开发` / `manifest 注册` / `加 skill` / `加 agent` | sop-updated.md |
+| `skill` | `skill` / `skills` / `skill 列表` / `skill 速查` / `模块` | SKILLS.md |
+| `agent` | `agent` / `agents` / `agent 列表` / `agent 速查` / `reviewer` / `resolver` | AGENTS.md |
+| `command` | `command` / `commands` / `slash` / `/` / `命令列表` | COMMANDS.md |
 
 **使用示例**：
 
 ```bash
-# 1) 直接调 slash command
-/ecc-cn-explain orchestration     # 打开 ECC-技能编排机制.md
-/ecc-cn-explain selection         # 打开 ECC-技能选择机制-渐进式加载.md
-/ecc-cn-explain error-fix         # 打开 ECC-错误定位与修复机制.md
-/ecc-cn-explain coupling          # 打开 Agent-Skill-耦合方式决策知识库.md
-/ecc-cn-explain                   # 无参数：列出全部 4 份简介
+# 1) 直接调 slash command（任一 topic）
+/ecc-cn-explain orchestration
+/ecc-cn-explain sop
+/ecc-cn-explain skill
+/ecc-cn-explain agent
+/ecc-cn-explain command
+/ecc-cn-explain                          # 无参数：列全部 8 份简介
 
-# 2) 在对话里自然问（AI 自动路由）
-"ECC 编排机制是怎么工作的？"
-"build 错了应该怎么修？"
-"加新 agent 时怎么决定挂哪些 skill？"
+# 2) 在对话里自然问（AI 自动调对应 skill）
+"ECC 编排机制是怎么工作的？"           # → ecc-cn-mechanisms
+"加新 skill 要走哪几步？"              # → ecc-cn-sop
+"有哪些 reviewer agent？"             # → ecc-cn-agent-catalog
+"用什么命令做 code review？"          # → ecc-cn-command-catalog
 ```
-
-**topic 关键字（中英文都能识别）**：
-
-| topic | 命中关键字 |
-|---|---|
-| orchestration | `orchestrat*` / `编排` / `pipeline` / `6 阶段` / `phase mask` |
-| selection | `select*` / `选择` / `progressive` / `渐进式` / `fuzzy` / `Top-N` / `三级下钻` |
-| error-fix | `error` / `fix` / `bug` / `错误` / `修复` / `build-resolver` / `minimal diff` |
-| coupling | `coupling` / `耦合` / `强耦合` / `弱耦合` / `binding` |
 
 ### 14.4 文件结构
 
 ```
 TINGyu123644/ECC/
 ├── .claude-plugin/
-│   ├── plugin.json            # name=ecc-cn, deps: ecc@^2.0.0
+│   ├── plugin.json          # name=ecc-cn v2.1.0，无 deps
 │   ├── marketplace.json
-│   └── README.md              # 插件说明（人读）
-├── skills/
-│   ├── ecc-cn-mechanisms/SKILL.md
-│   └── ecc-cn-coupling-decision/SKILL.md
-├── commands/
-│   └── ecc-cn-explain.md
-├── ECC-技能编排机制.md                      ← 文档 1（被 skill 引用）
-├── ECC-技能选择机制-渐进式加载.md           ← 文档 2
-├── ECC-错误定位与修复机制.md                ← 文档 3
-├── Agent-Skill-耦合方式决策知识库.md        ← 文档 4
-└── ECC-main/                               ← 子模块（= 原版 ECC 插件）
+│   └── README.md
+├── skills/                   # 295 个 SKILL.md（289 ECC + 6 ecc-cn-*）
+├── agents/                   # 73 个 agent
+├── commands/                 # 96 个 command（含 ecc-cn-explain）
+├── 8 份根级文档
+│   ├── ECC-技能编排机制.md
+│   ├── ECC-技能选择机制-渐进式加载.md
+│   ├── ECC-错误定位与修复机制.md
+│   ├── Agent-Skill-耦合方式决策知识库.md
+│   ├── sop-updated.md                 ← 6 步插件开发 SOP
+│   ├── SKILLS.md                      ← 291 skill 速查
+│   ├── AGENTS.md                      ← 73 agent 速查
+│   └── COMMANDS.md                    ← 96 command 速查
+└── ECC-main/                # 子模块（source reference，运行时不需要）
 ```
 
 ### 14.5 与原版 ECC 插件的关系
 
-| 维度 | 原版 ECC | ecc-cn |
+| 维度 | 原版 ECC（`affaan-m/ecc`） | ecc-cn v2.1.0 |
 |---|---|---|
 | plugin name | `ecc` | `ecc-cn` |
-| 来源 | `affaan-m/ecc`（upstream） | `TINGyu123644/ECC`（wrapper fork） |
-| 内容 | 67 agents / 278 skills / 94 commands / hooks / rules / MCP | 4 份机制文档 + 2 skill + 1 command |
-| 是否被修改 | ❌（wrapper 不动 ECC-main 子模块） | ✅（独立维护） |
-| 依赖 | 无 | `ecc: ^2.0.0` |
+| 内容 | 67 agents / 278 skills / 94 commands / hooks / rules / MCP | **73 agents / 295 skills / 96 commands + 8 份知识文档** |
+| 是否被修改 | upstream 不变 | ✅ 自维护 |
+| 依赖 | 无 | ❌ 无（自包含） |
 | 命名空间 | `ecc:*` | `ecc-cn:*` |
 
-**结论**：装 `ecc-cn` = 装 ECC + 4 份知识文档，零冲突、零侵入、零破坏。
+**结论**：ecc-cn 是 ECC 的**完整打包 + 中文知识层扩展**，不是 thin wrapper。装 ecc-cn 即得到与 ECC 等价的全部功能 + 8 份知识文档 + 6 个中文路由 skill + 1 个 `/ecc-cn-explain` 命令。
 
 ### 14.6 升级 / 卸载
 
@@ -667,7 +715,7 @@ TINGyu123644/ECC/
 # 升级
 claude plugin update ecc-cn
 
-# 卸载（不会自动卸 ECC，ECC 仍是独立 plugin）
+# 卸载（因为无依赖，卸 ecc-cn 不会影响任何其他插件）
 claude plugin uninstall ecc-cn
 ```
 
@@ -675,16 +723,17 @@ claude plugin uninstall ecc-cn
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
-| `/ecc-cn-explain` 报"未知命令" | 插件没装上 | 跑 `claude plugin list` 看 ecc-cn 在不在 |
-| skill 路由不到 4 份文档 | 文档相对路径错（多半是 .claude-plugin 没指向 ./skills） | 重装或看 `plugin.json` 的 `skills` 字段 |
+| `/ecc-cn-explain` 报"未知命令" | 插件没装上 | `claude plugin list` 看 ecc-cn 在不在 |
+| skill 路由不到文档 | 文档相对路径错（多半 plugin.json 没指向 `./skills` `./agents` `./commands`） | 重装或检查 `plugin.json` 三个目录字段 |
 | 装完冲突报 `ecc-cn` 已存在 | 重复装 | `claude plugin uninstall ecc-cn` 再装 |
-| 子模块 clone 失败（SSH 22 被拒） | 本机防火墙 | wrapper 已把 `.gitmodules` 改成 HTTPS，应能正常拉 |
+| 某个 ECC 命令找不到 | 复制过程漏文件（理论上不会） | 对照 `ECC-main/commands/` 与 wrapper `commands/` |
+| 想要原版精简版 | 用 `claude plugin install affaan-m/ecc` | ecc 与 ecc-cn 可共存 |
 
 ### 14.8 一句话总结
 
-> 装一条命令 `claude plugin install https://github.com/TINGyu123644/ECC`，自动拿到原版 ECC + 4 份机制知识文档 + `/ecc-cn-explain` 命令。零侵入，零配置。
+> `claude plugin install https://github.com/TINGyu123644/ECC` —— 一条命令获得 295 skills / 73 agents / 96 commands + 8 份知识文档 + 6 个中文路由 skill + `/ecc-cn-explain` 命令。自包含，无依赖。
 
 ---
 
-**最后更新**：2026-08-05
+**最后更新**：2026-08-05（v2.1.0 重写）
 **会话总结者**：self-improver agent 模式 + Claude 辅助
