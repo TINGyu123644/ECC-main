@@ -13,6 +13,7 @@
   - [`ECC-技能选择机制-渐进式加载.md`](./ECC-技能选择机制-渐进式加载.md) — 渐进式加载机制（v1.2，5 种方法：2 代码层 + 3 约定层）
   - [`ECC-技能编排机制.md`](./ECC-技能编排机制.md) — 编排机制（v2.0，「4 类文件 + 1 条数据流」；§ 8「讲给小朋友听:写作文 5 步」为通俗版）
   - [`ECC-错误定位与修复机制.md`](./ECC-错误定位与修复机制.md) — 错误定位与修复机制（v1.0，5 类资源 + 1 触发原则；诚实声明：必须先有错误信号）
+- **1 套 plugin 包装**（2026-08-05 新增）：wrapper 仓库本身是 Claude Code plugin `ecc-cn` v1.0.0，自动依赖 `ecc@^2.0.0`，详见 § 14 插件使用说明
 - **1 份耦合判定知识库**（根目录）：
   - [`Agent-Skill-耦合方式决策知识库.md`](./Agent-Skill-耦合方式决策知识库.md) — 强/弱耦合判定标准
 - **速查表**：
@@ -545,5 +546,145 @@ Step 5  8 项自检     → 完整核验清单
 
 ---
 
-**最后更新**：2026-07-25
-**会话总结者**：self-improver agent 模式
+## 14. 如何使用 ecc-cn 插件（2026-08-05 新增）
+
+> wrapper 仓库 `TINGyu123644/ECC` 本身即 Claude Code 插件 `ecc-cn` v1.0.0。本节是**用户视角**的完整使用说明。
+
+### 14.1 它是什么
+
+`ecc-cn` 是一个**薄包装插件**，把 wrapper 根目录的 4 份机制知识文档（编排 / 选择 / 错误定位修复 / 耦合判定）暴露为可调用的 skill 和 slash command。它**不替代也不修改**原版 ECC 插件；通过 `dependencies` 字段自动安装 `ecc@^2.0.0`，装 `ecc-cn` 就同时拿到两套。
+
+**插件元信息**：
+
+| 项 | 值 |
+|---|---|
+| plugin name | `ecc-cn` |
+| version | `1.0.0` |
+| author | TINGyu123644 |
+| repository | `https://github.com/TINGyu123644/ECC` |
+| dependency | `ecc: ^2.0.0`（自动安装） |
+| 命名空间 | `ecc-cn-*`（不与 `ecc:*` 撞名） |
+
+### 14.2 安装
+
+**方式 A：从 GitHub 直装（推荐）**
+
+```bash
+claude plugin install https://github.com/TINGyu123644/ECC
+```
+
+Claude Code 会自动：
+1. 拉取 wrapper 仓库
+2. 读 `.claude-plugin/plugin.json` 看到 `dependencies: { ecc: "^2.0.0" }`
+3. 自动装原版 ECC 插件
+4. 把 wrapper 的 skills/commands 注册到当前会话
+
+**方式 B：本地 clone 后用 marketplace 形式**
+
+```bash
+git clone https://github.com/TINGyu123644/ECC.git ~/ecc-cn
+cd ~/ecc-cn
+claude plugin install .    # 或 marketplace.json 路径
+```
+
+**方式 C：作为 submodule 嵌入已有项目**
+
+```bash
+git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn
+```
+
+### 14.3 装好后能用什么
+
+**3 个新资源**（与原 ECC 资源共存，不重名）：
+
+| 资源 | 类型 | 触发方式 | 作用 |
+|---|---|---|---|
+| `ecc-cn-mechanisms` | skill | 用户问 ECC 机制相关问题时 AI 自动路由 | 路由到 4 份文档之一 |
+| `ecc-cn-coupling-decision` | skill | 用户问 Agent-Skill 耦合时 AI 自动路由 | Agent-Skill 强/弱耦合判定标准 |
+| `/ecc-cn-explain <topic>` | slash command | 用户主动输入 | 直接打开对应文档 |
+
+**使用示例**：
+
+```bash
+# 1) 直接调 slash command
+/ecc-cn-explain orchestration     # 打开 ECC-技能编排机制.md
+/ecc-cn-explain selection         # 打开 ECC-技能选择机制-渐进式加载.md
+/ecc-cn-explain error-fix         # 打开 ECC-错误定位与修复机制.md
+/ecc-cn-explain coupling          # 打开 Agent-Skill-耦合方式决策知识库.md
+/ecc-cn-explain                   # 无参数：列出全部 4 份简介
+
+# 2) 在对话里自然问（AI 自动路由）
+"ECC 编排机制是怎么工作的？"
+"build 错了应该怎么修？"
+"加新 agent 时怎么决定挂哪些 skill？"
+```
+
+**topic 关键字（中英文都能识别）**：
+
+| topic | 命中关键字 |
+|---|---|
+| orchestration | `orchestrat*` / `编排` / `pipeline` / `6 阶段` / `phase mask` |
+| selection | `select*` / `选择` / `progressive` / `渐进式` / `fuzzy` / `Top-N` / `三级下钻` |
+| error-fix | `error` / `fix` / `bug` / `错误` / `修复` / `build-resolver` / `minimal diff` |
+| coupling | `coupling` / `耦合` / `强耦合` / `弱耦合` / `binding` |
+
+### 14.4 文件结构
+
+```
+TINGyu123644/ECC/
+├── .claude-plugin/
+│   ├── plugin.json            # name=ecc-cn, deps: ecc@^2.0.0
+│   ├── marketplace.json
+│   └── README.md              # 插件说明（人读）
+├── skills/
+│   ├── ecc-cn-mechanisms/SKILL.md
+│   └── ecc-cn-coupling-decision/SKILL.md
+├── commands/
+│   └── ecc-cn-explain.md
+├── ECC-技能编排机制.md                      ← 文档 1（被 skill 引用）
+├── ECC-技能选择机制-渐进式加载.md           ← 文档 2
+├── ECC-错误定位与修复机制.md                ← 文档 3
+├── Agent-Skill-耦合方式决策知识库.md        ← 文档 4
+└── ECC-main/                               ← 子模块（= 原版 ECC 插件）
+```
+
+### 14.5 与原版 ECC 插件的关系
+
+| 维度 | 原版 ECC | ecc-cn |
+|---|---|---|
+| plugin name | `ecc` | `ecc-cn` |
+| 来源 | `affaan-m/ecc`（upstream） | `TINGyu123644/ECC`（wrapper fork） |
+| 内容 | 67 agents / 278 skills / 94 commands / hooks / rules / MCP | 4 份机制文档 + 2 skill + 1 command |
+| 是否被修改 | ❌（wrapper 不动 ECC-main 子模块） | ✅（独立维护） |
+| 依赖 | 无 | `ecc: ^2.0.0` |
+| 命名空间 | `ecc:*` | `ecc-cn:*` |
+
+**结论**：装 `ecc-cn` = 装 ECC + 4 份知识文档，零冲突、零侵入、零破坏。
+
+### 14.6 升级 / 卸载
+
+```bash
+# 升级
+claude plugin update ecc-cn
+
+# 卸载（不会自动卸 ECC，ECC 仍是独立 plugin）
+claude plugin uninstall ecc-cn
+```
+
+### 14.7 故障排查
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| `/ecc-cn-explain` 报"未知命令" | 插件没装上 | 跑 `claude plugin list` 看 ecc-cn 在不在 |
+| skill 路由不到 4 份文档 | 文档相对路径错（多半是 .claude-plugin 没指向 ./skills） | 重装或看 `plugin.json` 的 `skills` 字段 |
+| 装完冲突报 `ecc-cn` 已存在 | 重复装 | `claude plugin uninstall ecc-cn` 再装 |
+| 子模块 clone 失败（SSH 22 被拒） | 本机防火墙 | wrapper 已把 `.gitmodules` 改成 HTTPS，应能正常拉 |
+
+### 14.8 一句话总结
+
+> 装一条命令 `claude plugin install https://github.com/TINGyu123644/ECC`，自动拿到原版 ECC + 4 份机制知识文档 + `/ecc-cn-explain` 命令。零侵入，零配置。
+
+---
+
+**最后更新**：2026-08-05
+**会话总结者**：self-improver agent 模式 + Claude 辅助
