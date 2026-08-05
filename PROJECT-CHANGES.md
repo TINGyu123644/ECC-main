@@ -653,23 +653,29 @@ Claude Code 在启动时会扫描 `~/.claude/plugins/` 目录，把每个子目�
 
 #### 方式 B：CLI marketplace 两步装（可选，需要 `claude` CLI 可用）
 
-如果本机 `claude` CLI 正常（`claude --version` 能输出版本号），用两步：
+**前置检查**：本机 `claude` CLI 正常（`claude --version` 能输出版本号）。
+
+实际可用的 CLI 语法（用 `claude plugin --help` 验证过）：
 
 ```bash
-# 第 1 步：把仓库 URL 注册成 marketplace（命名随意，下面用 ecc-cn-marketplace）
-claude marketplace add https://github.com/TINGyu123644/ECC ecc-cn-marketplace
+# 第 1 步：把仓库 URL 注册成 marketplace（<source> 接受 URL / 路径 / GitHub repo）
+claude plugin marketplace add https://github.com/TINGyu123644/ECC
 
-# 第 2 步：从该 marketplace 装插件（用 plugin.json 里的 name 字段 = "ecc-cn"）
-claude plugin install ecc-cn
+# 第 2 步：用 plugin@marketplace 限定语法从该 marketplace 装
+claude plugin install ecc-cn@<marketplace-name>
 ```
 
-**常见误区**：`claude plugin install https://github.com/...` ❌ —— 这条命令不接受 URL 当 plugin 名，会把整个 URL 字符串当 plugin 名去 marketplace 里找，报错：
+`<marketplace-name>` 是 `marketplace add` 自动从 URL 派生的标识符。装完跑一次 `claude plugin list` 即可看到 `ecc-cn`。
+
+**常见误区 1**：`claude plugin install https://github.com/...` ❌ —— 这条命令不接受 URL 当 plugin 名，会把整个 URL 字符串当 plugin 名去 marketplace 里找，报错：
 
 ```
 Plugin "https://github.com/..." not found in any configured marketplace
 ```
 
-正确做法是先 `marketplace add` 注册，再 `plugin install` 用 plugin 名。
+正确做法是先 `marketplace add` 注册，再 `plugin install` 用 `plugin@marketplace` 限定语法。
+
+**常见误区 2**：`claude marketplace add <url> <name>` ❌ —— `marketplace add` **只接受 `<source>` 一个参数**，没有第二个 name 参数（虽然 `add --help` 显示形式上能加，但实际是被忽略，会拉起交互式 Claude Code UI）。marketplace 名由命令自动从 URL 派生。
 
 如果 `claude` CLI 坏了（最常见：`claude.exe` 被 npm update 替换失败只剩 `.old.*` 备份），这两条也会失败，请改用方式 A 手动复制。
 
