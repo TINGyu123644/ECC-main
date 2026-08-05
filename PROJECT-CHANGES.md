@@ -581,83 +581,91 @@ Step 5  8 项自检     → 完整核验清单
 | dependency | ❌ 无（v2.0.0 起自包含） |
 | 命名空间 | `ecc-cn-*`（不与 `ecc:*` 撞名） |
 
-### 14.2 安装（全 shell 通用）
+### 14.2 安装（推荐：手动复制，避开 CLI 依赖）
 
-#### 方式 A：从 GitHub 直装（最简单）
+#### 根因说明：为什么要避开 `claude plugin install` 命令
 
-所有 shell 都用同一条命令：
+`claude plugin install <url>` 这条命令依赖本机 `claude` CLI（`~/.npm-global/.../claude.exe` 或 `%APPDATA%\npm\claude.cmd`）可用。如果本机的 `claude` CLI 没装好、版本不对、或 npm update 时 binary 替换失败（常见情况：本机只剩 `claude.exe.old.*` 备份），命令就会报：
+
+```
+无法将 "claude.exe" 项识别为 cmdlet、函数、脚本文件或可运行程序的名称
+```
+
+此时**任何依赖 CLI 的安装方式都会失败**。下面的"手动复制"方法**完全不依赖 `claude` CLI**，是真正通用的方法。
+
+#### 方式 A：手动复制（推荐，零依赖）
+
+Claude Code 在启动时会扫描 `~/.claude/plugins/` 目录，把每个子目录当一个 plugin。只要 `ecc-cn` 这个子目录里有 `.claude-plugin/plugin.json` + `skills/` + `agents/` + `commands/`，就会被自动加载。
+
+**步骤**：
+
+1. **拿到 plugin 文件**（任选一种）
+
+   ```bash
+   git clone https://github.com/TINGyu123644/ECC.git ecc-cn-source
+   ```
+
+   ```powershell
+   git clone https://github.com/TINGyu123644/ECC.git ecc-cn-source
+   ```
+
+   ```cmd
+   git clone https://github.com/TINGyu123644/ECC.git ecc-cn-source
+   ```
+
+   或：浏览器访问 <https://github.com/TINGyu123644/ECC> → "Code" → "Download ZIP" → 解压
+
+   或：从别人机器 `scp` / U 盘 / 网盘拷一份
+
+2. **复制到 plugins 目录**（一行命令，全 shell 通用）
+
+   ```bash
+   # macOS / Linux / Git Bash
+   cp -r ecc-cn-source ~/.claude/plugins/ecc-cn
+   ```
+
+   ```powershell
+   # Windows PowerShell
+   Copy-Item -Recurse ecc-cn-source $env:USERPROFILE\.claude\plugins\ecc-cn
+   ```
+
+   ```cmd
+   :: Windows cmd
+   xcopy /E /I ecc-cn-source %USERPROFILE%\.claude\plugins\ecc-cn
+   ```
+
+3. **重启 Claude Code**（让 plugin 加载器扫到新目录）
+
+   启动 `claude`（或 IDE 重启）后，跑：
+
+   ```bash
+   claude --list-plugins    # 或 claude plugin list
+   ```
+
+   应该看到 `ecc-cn` 在列表里。
+
+**为什么这个方法最稳**：
+- ✅ 不依赖 `claude` CLI 是否正常
+- ✅ 不依赖 npm / PowerShell / shell 行为差异
+- ✅ 离线可用（拿到文件后无需联网）
+- ✅ 跨平台一致（Linux / macOS / Windows 都按"复制到 plugins 目录"操作）
+- ✅ 不污染 HOME 目录（不会创建字面 `~/ecc-cn/` 这种垃圾目录）
+
+#### 方式 B：CLI 直装（可选，需要 `claude` CLI 可用）
+
+如果本机 `claude` CLI 正常：
 
 ```bash
 claude plugin install https://github.com/TINGyu123644/ECC
 ```
 
-```powershell
-claude plugin install https://github.com/TINGyu123644/ECC
-```
+一行搞定。Claude Code 会自动拉仓库 + 注册。但如果 `claude` CLI 坏了（最常见：`claude.exe` 被 npm update 替换失败只剩 `.old.*` 备份），这条会失败，请改用方式 A。
 
-```cmd
-claude plugin install https://github.com/TINGyu123644/ECC
-```
-
-Claude Code 会自动拉仓库 + 注册 `skills/` `agents/` `commands/` + 不触发依赖安装。
-
-#### 方式 B：本地 clone 后装（跨 shell 表）
-
-| Shell | clone 路径写法 | cd 写法 | install 命令 |
-|---|---|---|---|
-| **bash / zsh**（macOS / Linux） | `~/ecc-cn` | `cd ~/ecc-cn` | `claude plugin install .` |
-| **Git Bash**（Windows） | `~/ecc-cn` | `cd ~/ecc-cn` | `claude plugin install .` |
-| **PowerShell**（Windows） | `"$HOME/ecc-cn"` | `cd "$HOME/ecc-cn"` | `claude plugin install .` |
-| **PowerShell**（Windows，绝对路径） | `C:\Users\26631\ecc-cn` | `cd C:\Users\26631\ecc-cn` | `claude plugin install .` |
-| **cmd**（Windows） | `%USERPROFILE%\ecc-cn` | `cd /d %USERPROFILE%\ecc-cn` | `claude plugin install .` |
-| **WSL**（从 Windows 访问 Linux 文件） | `~/ecc-cn`（Linux 视角） | `cd ~/ecc-cn` | `claude plugin install .` |
-
-**bash / zsh / Git Bash（macOS / Linux / Windows Git Bash）**
+#### 方式 C：作为 submodule 嵌入已有项目（高级）
 
 ```bash
-git clone https://github.com/TINGyu123644/ECC.git ~/ecc-cn
-cd ~/ecc-cn
-claude plugin install .
-```
-
-**Windows PowerShell**
-
-```powershell
-git clone https://github.com/TINGyu123644/ECC.git "$HOME/ecc-cn"
-cd "$HOME/ecc-cn"
-claude plugin install .
-```
-
-或绝对路径（避免 home 目录膨胀）：
-
-```powershell
-git clone https://github.com/TINGyu123644/ECC.git C:\Users\26631\ecc-cn
-cd C:\Users\26631\ecc-cn
-claude plugin install .
-```
-
-**Windows cmd**
-
-```cmd
-git clone https://github.com/TINGyu123644/ECC.git %USERPROFILE%\ecc-cn
-cd /d %USERPROFILE%\ecc-cn
-claude plugin install .
-```
-
-> ⚠️ **PowerShell 常见坑**：`~` 在 PowerShell 里**不会展开**（PS 5.x 历史 bug）。`git clone ~/ecc-cn` 会被 git 当字面字符处理，创建出 `~\ecc-cn\` 这种字面带波浪号的目录。如果已经误 clone，先清理：
->
-> ```powershell
-> Remove-Item -Recurse -Force "~\ecc-cn"
-> ```
-
-#### 方式 C：作为 submodule 嵌入已有项目
-
-```bash
-git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn
-```
-
-```powershell
-git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn
+git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn-source
+# 然后用方式 A 的"复制"步骤把它放进 .claude/plugins/ecc-cn
 ```
 
 > ⚠️ 注意：v2.1.0 wrapper 不再依赖 `ECC-main/` 子模块（子模块仅作 source reference）。但仓库仍保留子模块路径，删它不影响 plugin 运行。
