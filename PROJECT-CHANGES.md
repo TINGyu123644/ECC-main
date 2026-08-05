@@ -560,7 +560,7 @@ Step 5  8 项自检     → 完整核验清单
 
 ### 14.1 它是什么（v2.1.0）
 
-`ecc-cn` 是**自包含 Claude Code 插件**，把原版 ECC 的 **291 skills / 73 agents / 96 commands 全部打包**进来（已与子模块 `ECC-main/` 内容一致），再叠加：
+`ecc-cn` 是**自包含 Claude Code 插件**，把原版 ECC 的 **295 skills / 73 agents / 96 commands 全部打包**进来（289 个来自 ECC-main + 6 个 ecc-cn-* 中文扩展；与子模块 `ECC-main/` 内容对齐），再叠加：
 
 - **4 份机制知识文档**（编排 / 选择 / 错误定位修复 / 耦合判定）
 - **1 份 SOP**（sop-updated.md，6 步插件开发）
@@ -699,7 +699,7 @@ git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn-source
 
 ### 14.3 装好后能用什么
 
-**8 份根级文档**（直接打开 / 被 skill 路由）：
+**8 份根级文档**（直接打开 / 被命令路由）：
 
 | # | 文档 | 内容 |
 |---|---|---|
@@ -708,28 +708,23 @@ git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn-source
 | 3 | `ECC-错误定位与修复机制.md` | v1.0 错误定位修复（5 类资源 + 1 触发原则） |
 | 4 | `Agent-Skill-耦合方式决策知识库.md` | Agent-Skill 强/弱耦合判定 |
 | 5 | `sop-updated.md` | **v2.0 插件开发 6 步 SOP**（Step 0-5） |
-| 6 | `SKILLS.md` | **291 skill × 17 模块速查**（自动生成） |
+| 6 | `SKILLS.md` | **287 skill × 17 模块速查**（自动生成） |
 | 7 | `AGENTS.md` | **73 agent 速查**（自动生成） |
-| 8 | `COMMANDS.md` | **96 command 速查**（自动生成） |
+| 8 | `COMMANDS.md` | **102 command 速查**（自动生成） |
 
-**6 个 ecc-cn-* skill**（命名空间独占）：
+**7 个 ecc-cn-* 命令**（命名空间独占 `/ecc-cn-*`）：
 
-| skill | 路由到 |
+| 命令 | 路由到 |
 |---|---|
-| `ecc-cn-mechanisms` | 4 份机制文档（按用户意图） |
-| `ecc-cn-coupling-decision` | 耦合判定知识库 |
-| `ecc-cn-sop` | sop-updated.md（6 步插件开发 SOP） |
-| `ecc-cn-skill-catalog` | SKILLS.md（291 skill） |
-| `ecc-cn-agent-catalog` | AGENTS.md（73 agent） |
-| `ecc-cn-command-catalog` | COMMANDS.md（96 command） |
+| `/ecc-cn-explain <topic>` | 8 份根级文档之一（路由表见下） |
+| `/ecc-cn-mechanisms <topic>` | 8 份机制相关文档之一（含 sop / 速查表） |
+| `/ecc-cn-coupling-decision` | 耦合判定知识库 |
+| `/ecc-cn-sop` | sop-updated.md（6 步插件开发 SOP） |
+| `/ecc-cn-skill-catalog` | SKILLS.md（287 skill） |
+| `/ecc-cn-agent-catalog` | AGENTS.md（73 agent） |
+| `/ecc-cn-command-catalog` | COMMANDS.md（102 command） |
 
-**1 个 slash command**：
-
-```
-/ecc-cn-explain <topic>
-```
-
-**8 个 topic**（中英文都能识别）：
+**/ecc-cn-explain 与 /ecc-cn-mechanisms 都支持 8 个 topic 路由**（中英文都能识别）：
 
 | topic | 命中关键字 | 打开 |
 |---|---|---|
@@ -745,19 +740,22 @@ git submodule add https://github.com/TINGyu123644/ECC.git .claude/ecc-cn-source
 **使用示例**：
 
 ```bash
-# 1) 直接调 slash command（任一 topic）
-/ecc-cn-explain orchestration
-/ecc-cn-explain sop
-/ecc-cn-explain skill
-/ecc-cn-explain agent
-/ecc-cn-explain command
-/ecc-cn-explain                          # 无参数：列全部 8 份简介
+# 1) 直接调 slash 命令（任一）
+/ecc-cn-explain orchestration            # 打开编排机制文档
+/ecc-cn-mechanisms sop                   # 打开 SOP
+/ecc-cn-coupling-decision                # 打开耦合判定
+/ecc-cn-sop                              # 打开 SOP（同 /ecc-cn-mechanisms sop）
+/ecc-cn-skill-catalog                    # 列出 287 skill
+/ecc-cn-agent-catalog                    # 列出 73 agent
+/ecc-cn-command-catalog                  # 列出 102 command
 
-# 2) 在对话里自然问（AI 自动调对应 skill）
-"ECC 编排机制是怎么工作的？"           # → ecc-cn-mechanisms
-"加新 skill 要走哪几步？"              # → ecc-cn-sop
-"有哪些 reviewer agent？"             # → ecc-cn-agent-catalog
-"用什么命令做 code review？"          # → ecc-cn-command-catalog
+# 2) 无参数列出全部
+/ecc-cn-explain                          # 列出全部 8 份简介
+/ecc-cn-mechanisms                       # 列出全部 8 份简介
+
+# 3) 在对话里自然问
+"ECC 编排机制是怎么工作的？"
+"加新 skill 要走哪几步？"
 ```
 
 ### 14.4 文件结构
