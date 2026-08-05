@@ -6,12 +6,12 @@
 
 ## 0. 速览（TL;DR）
 
-- **本项目做了什么**：在原版 ECC 上加了 **3 个 skill + 1 个 agent + 1 套 SOP v2.0 + 1 份耦合决策知识库 + 1 套自动同步机制**
-- **3 个新 skill**：`ppt-generator`、`macro-monitor`、`self-improvement`
-- **1 个新 agent**：`self-improver`（与 `self-improvement` 强耦合）
-- **2 份姊妹文档**（根目录）：
-  - [`ECC-技能选择机制-渐进式加载.md`](./ECC-技能选择机制-渐进式加载.md) — 7 种自动选择方法详解
-  - [`ECC-技能编排机制-写作文版.md`](./ECC-技能编排机制-写作文版.md) — 6 步编排 pipeline 详解
+- **本项目做了什么**：在原版 ECC 上加了 **8 个 skill + 3 个 agent + 1 套 SOP v2.0 + 1 份耦合决策知识库 + 1 套自动同步机制**
+- **8 个新 skill**：`ppt-generator`、`macro-monitor`、`stock-analyzer`、`self-improvement`、`ecc-plugin-dev-sop`、`coupling-decider`、`file-templates`、`verify-checklist`
+- **3 个新 agent**：`self-improver`、`stock-analyst`、`ecc-plugin-dev-agent`
+- **2 份姊妹文档**（根目录；2026-07-30 v2.0 重排后）：
+  - [`ECC-技能选择机制-渐进式加载.md`](./ECC-技能选择机制-渐进式加载.md) — 渐进式加载机制（v1.2，5 种方法：2 代码层 + 3 约定层）
+  - [`ECC-技能编排机制.md`](./ECC-技能编排机制.md) — 编排机制（v2.0，「4 类文件 + 1 条数据流」；§ 8「讲给小朋友听:写作文 5 步」为通俗版）
 - **1 份耦合判定知识库**（根目录）：
   - [`Agent-Skill-耦合方式决策知识库.md`](./Agent-Skill-耦合方式决策知识库.md) — 强/弱耦合判定标准
 - **速查表**：
@@ -19,6 +19,8 @@
   - [`AGENTS.md`](./agents/AGENTS.md) 顶部 — 14 个 agent 类别的速查表
 - **自动同步机制**：3 层 hook（PostToolUse + post-commit + post-merge），`manifest - baseline` 实时算
 - **本 README 内容保持原作者原貌**（[README.md](./README.md) 顶部加 callout 指向本文档）
+
+> **后续更新**：v2.0/v1.2 重排（2026-07-30）将原独立的 `ECC-技能编排机制-写作文版.md` 合并回主文档作为 § 8；本文件后续引用均指向主文档。wrapper 级 `loop-orchestrator/` 整合层（2026-08）已退役，详见 `CHANGELOG.md` Unreleased 段。
 
 ---
 
@@ -82,11 +84,11 @@
 **内容**：7 种自动选择方法详解（脚本层 2 种 + 技能层 5 种）
 **何时看**：加新 skill 时（确定命名 / 路径 / 触发方式）
 
-### 2.6 文档：`ECC-技能编排机制-写作文版.md`
+### 2.6 文档：`ECC-技能编排机制.md`（v2.0；§ 8 为通俗版）
 
-**位置**：`./ECC-技能编排机制-写作文版.md`
-**内容**：6 步编排 pipeline 详解（plan / tdd / review / commit）
-**何时看**：加新 agent 或编排多 skill 协同时
+**位置**：`./ECC-技能编排机制.md`
+**内容**：v2.0 编排机制 —「4 类文件 + 1 条数据流」：1 共享引擎（`skills/orch-pipeline/SKILL.md`，122 行）+ 5 剧本（`skills/orch-{add-feature, change-feature, fix-defect, refine-code, build-mvp}/SKILL.md`，~45 行/个）+ 6 入口（`commands/orch-*.md`，~30 行/个）+ ⭐ 1 真硬代码（`workflows/orch-review.workflow.js`，296 行，唯一 fail-closed）。含 4 tier size classifier（trivial/small/standard/large）与诚实声明（仅 Phase 5 fail-closed，其余靠 AI 自觉）。通俗版见 § 8「讲给小朋友听:写作文 5 步（4 个办法）」。
+**何时看**：加新 agent、设计多 skill 协同流程、或评审编排 pipeline 时。
 
 ### 2.7 SKILLS.md / AGENTS.md 速查表
 
@@ -312,8 +314,8 @@ node scripts/update-resource-index.js
 ```
 ECC_BASELINE.json                                ← 原版基线（278 skill / 67 agent / 7 binding）
 PROJECT-CHANGES.md                              ← 本文档
-ECC-技能选择机制-渐进式加载.md                  ← 7 种自动选择方法详解
-ECC-技能编排机制-写作文版.md                     ← 6 步编排 pipeline 详解
+ECC-技能选择机制-渐进式加载.md                  ← 渐进式加载机制（v1.2，5 种方法）
+ECC-技能编排机制.md                             ← 编排机制（v2.0，「4 类文件 + 1 条数据流」；§ 8 为通俗版）
 
 agents/self-improver.md                          ← 反射 agent
 skills/self-improvement/SKILL.md                 ← 学习日志 skill
