@@ -17,8 +17,8 @@
   - [`sop-updated.md`](./sop-updated.md) — ECC 插件开发 6 步标准操作清单（v2.0）
   - [`SKILLS.md`](./SKILLS.md) — 291 skill × 17 模块速查（自动生成）
   - [`AGENTS.md`](./AGENTS.md) — 73 agent 速查（自动生成）
-  - [`COMMANDS.md`](./COMMANDS.md) — 96 command 速查（自动生成）
-- **1 套 plugin 包装**（2026-08-05 新增，v2.1.0 自包含）：wrapper 仓库本身是 Claude Code 插件 `ecc-cn` v2.1.0，包含 295 skills / 73 agents / 96 commands + 8 份根文档，**无依赖**（v2.0.0 起去掉 ecc 依赖），详见 § 14 插件使用说明（含 PowerShell `$HOME` 安装示例）
+  - [`COMMANDS.md`](./COMMANDS.md) — 102 command 速查（自动生成）
+- **1 套 plugin 包装**（2026-08-05 新增，v2.1.0 自包含）：wrapper 仓库本身是 Claude Code 插件 `ecc-cn` v2.1.0，包含 287 skills / 73 agents / 102 commands + 8 份根文档，**无依赖**（v2.0.0 起去掉 ecc 依赖），详见 § 14 插件使用说明（含 PowerShell `$HOME` 安装示例）
 - **自动同步机制**：3 层 hook（PostToolUse + post-commit + post-merge），`manifest - baseline` 实时算
 - **本 README 内容保持原作者原貌**（[README.md](./README.md) 顶部加 callout 指向本文档）
 
@@ -560,7 +560,7 @@ Step 5  8 项自检     → 完整核验清单
 
 ### 14.1 它是什么（v2.1.0）
 
-`ecc-cn` 是**自包含 Claude Code 插件**，把原版 ECC 的 **295 skills / 73 agents / 96 commands 全部打包**进来（289 个来自 ECC-main + 6 个 ecc-cn-* 中文扩展；与子模块 `ECC-main/` 内容对齐），再叠加：
+`ecc-cn` 是**自包含 Claude Code 插件**，把原版 ECC 的 **287 skills / 73 agents / 102 commands 全部打包**进来（287 skills + 95 commands 来自 ECC-main + 7 个 ecc-cn-* 中文扩展命令；与子模块 `ECC-main/` 内容对齐），再叠加：
 
 - **4 份机制知识文档**（编排 / 选择 / 错误定位修复 / 耦合判定）
 - **1 份 SOP**（sop-updated.md，6 步插件开发）
@@ -777,7 +777,7 @@ TINGyu123644/ECC/
 │   ├── sop-updated.md                 ← 6 步插件开发 SOP
 │   ├── SKILLS.md                      ← 291 skill 速查
 │   ├── AGENTS.md                      ← 73 agent 速查
-│   └── COMMANDS.md                    ← 96 command 速查
+│   └── COMMANDS.md                    ← 102 command 速查
 └── ECC-main/                # 子模块（source reference，运行时不需要）
 ```
 
@@ -786,7 +786,7 @@ TINGyu123644/ECC/
 | 维度 | 原版 ECC（`affaan-m/ecc`） | ecc-cn v2.1.0 |
 |---|---|---|
 | plugin name | `ecc` | `ecc-cn` |
-| 内容 | 67 agents / 278 skills / 94 commands / hooks / rules / MCP | **73 agents / 295 skills / 96 commands + 8 份知识文档** |
+| 内容 | 67 agents / 278 skills / 94 commands / hooks / rules / MCP | **73 agents / 287 skills / 102 commands + 8 份知识文档** |
 | 是否被修改 | upstream 不变 | ✅ 自维护 |
 | 依赖 | 无 | ❌ 无（自包含） |
 | 命名空间 | `ecc:*` | `ecc-cn:*` |
@@ -815,7 +815,7 @@ claude plugin uninstall ecc-cn
 
 ### 14.8 一句话总结
 
-> `claude plugin install https://github.com/TINGyu123644/ECC` —— 一条命令获得 295 skills / 73 agents / 96 commands + 8 份知识文档 + 6 个中文路由 skill + `/ecc-cn-explain` 命令。自包含，无依赖。
+> `claude plugin install https://github.com/TINGyu123644/ECC` —— 一条命令获得 287 skills / 73 agents / 102 commands + 8 份知识文档 + 7 个 ecc-cn-* 中文命令。自包含，无依赖。
 
 ---
 
