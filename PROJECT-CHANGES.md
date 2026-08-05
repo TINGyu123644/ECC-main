@@ -651,44 +651,42 @@ Claude Code 在启动时会扫描 `~/.claude/plugins/` 目录，把每个子目�
 - ✅ 跨平台一致（Linux / macOS / Windows 都按"复制到 plugins 目录"操作）
 - ✅ 不污染 HOME 目录（不会创建字面 `~/ecc-cn/` 这种垃圾目录）
 
-#### 方式 B：CLI marketplace 两步装（可选，需要 `claude` CLI 可用）
+#### 方式 B：CLI marketplace 三步装（可选，需要 `claude` CLI 可用）
 
 **前置检查**：本机 `claude` CLI 正常（`claude --version` 能输出版本号）。
 
-实际可用的 CLI 语法（用 `claude plugin --help` 验证过）：
+**完整实操命令流**（已在本机验证通过）：
 
 ```bash
-# 第 1 步：把仓库 URL 注册成 marketplace（<source> 接受 URL / 路径 / GitHub repo）
+# 第 1 步：把仓库 URL 注册成 marketplace
 claude plugin marketplace add https://github.com/TINGyu123644/ECC
+# → 输出：✔ Successfully added marketplace: ecc-cn
+#   （marketplace 名由命令从 URL 自动派生为 'ecc-cn'）
 
-# 第 2 步：用 plugin@marketplace 限定语法从该 marketplace 装
-# 注意：marketplace 名是 add 命令自动派生的（实测对 wrapper 仓库派生为 'ecc-cn'），
-# 不是 URL 也不是任意字符串。装完先看实际名字：
-claude plugin marketplace list    # 找刚 add 的 marketplace 名
+# 第 2 步：每次 wrapper 仓库更新后必须刷新本地缓存
+claude plugin marketplace update ecc-cn
+# → 输出：✔ Successfully updated marketplace: ecc-cn
 
-# 然后用 plugin@marketplace 限定语法装（marketplace 名 = 'ecc-cn'）
+# 第 3 步：用 plugin@marketplace 限定语法装
 claude plugin install ecc-cn@ecc-cn
+# → 输出：✔ Successfully installed plugin: ecc-cn@ecc-cn (scope: user)
 ```
 
-**易踩的坑**：把 `<marketplace-name>` 当占位符保留 → 命令把字面字符串当 marketplace 名查找，报错：
+**4 个易踩的坑**：
 
-```
-Plugin "ecc-cn" not found in marketplace "<marketplace-name>".
-```
+1. ❌ `claude plugin install https://github.com/...` —— 把 URL 当 plugin 名查，报 `not found in any configured marketplace`。要先 add marketplace。
 
-正确做法是先用 `marketplace list` 看实际派生的 marketplace 名（实测本 wrapper 仓库派生为 `ecc-cn`），再代入。
+2. ❌ `claude marketplace add <url> <name>` —— `marketplace add` **只接受 `<source>` 一个参数**，第二个 name 参数被忽略，并会拉起交互式 Claude Code UI。marketplace 名由命令自动从 URL 派生。
 
-**常见误区 1**：`claude plugin install https://github.com/...` ❌ —— 这条命令不接受 URL 当 plugin 名，会把整个 URL 字符串当 plugin 名去 marketplace 里找，报错：
+3. ❌ 把 `<marketplace-name>` 字面字符串代入 `claude plugin install ecc-cn@<marketplace-name>` —— 同样被当 marketplace 名查，报 `Plugin "ecc-cn" not found in marketplace "<marketplace-name>"`。必须先用 `marketplace list` 看实际派生的 marketplace 名（实测 wrapper 仓库派生为 `ecc-cn`）。
 
-```
-Plugin "https://github.com/..." not found in any configured marketplace
-```
+4. ❌ wrapper 仓库更新后不跑 `marketplace update` 直接装 —— 本地 marketplace 缓存仍是旧版本，会用旧的 `plugin.json`（带 `agents` 字段）做 manifest 校验，报：
+   ```
+   Validation errors: agents: Invalid input
+   ```
+   因为 Claude Code plugin schema 不接受 `agents` 字段（`agents/` 目录会被自动扫描），wrapper 在 v2.1.1 起已去掉该字段。每次 wrapper 改动后必须 `marketplace update` 刷新。
 
-正确做法是先 `marketplace add` 注册，再 `plugin install` 用 `plugin@marketplace` 限定语法。
-
-**常见误区 2**：`claude marketplace add <url> <name>` ❌ —— `marketplace add` **只接受 `<source>` 一个参数**，没有第二个 name 参数（虽然 `add --help` 显示形式上能加，但实际是被忽略，会拉起交互式 Claude Code UI）。marketplace 名由命令自动从 URL 派生。
-
-如果 `claude` CLI 坏了（最常见：`claude.exe` 被 npm update 替换失败只剩 `.old.*` 备份），这两条也会失败，请改用方式 A 手动复制。
+如果 `claude` CLI 坏了（最常见：`claude.exe` 被 npm update 替换失败只剩 `.old.*` 备份），这三步也会失败，请改用方式 A 手动复制。
 
 #### 方式 C：作为 submodule 嵌入已有项目（高级）
 
